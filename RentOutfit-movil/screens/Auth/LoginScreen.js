@@ -16,13 +16,13 @@ export default function LoginScreen({ navigation }) { // Agregar `navigation` co
         />
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('SignIn')} // Navegar a la pantalla de SignIn
+          onPress={() => navigation.navigate('AuthStack', { screen: 'SignIn' })} // Navegar a la pantalla de SignIn
         >
           <Text style={styles.buttonText}>Iniciar sesión</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.navigate('SignUp')} // Navegar a la pantalla de SignUp
+          onPress={() => navigation.navigate('AuthStack', { screen: 'SignUp' })} // Navegar a la pantalla de SignUp
         >
           <Text style={styles.buttonText}>Crear cuenta</Text>
         </TouchableOpacity>

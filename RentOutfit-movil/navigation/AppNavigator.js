@@ -1,22 +1,27 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { AuthContext } from '../context/AuthContext'; // Importar el contexto de autenticación
+
 import SplashScreen from '../screens/Splash/SplashScreen';
-import AuthStack from '../screens/Auth/AuthStack';
-import MainStack from '../navigation/MainStack';
-import SignInScreen from '../screens/Auth/SignInScreen';
-import SignUpScreen from '../screens/Auth/SignupScreen';
+import AuthStack from '../screens/Auth/AuthStack'; // Stack de autenticación
+import MainStack from './MainStack'; // Pantallas principales de la app
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
+  const { user } = useContext(AuthContext); // Obtener el usuario autenticado
+
   return (
     <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="AuthStack" component={AuthStack} />
+      
+      {/* Mostrar siempre el MainStack */}
       <Stack.Screen name="MainStack" component={MainStack} />
-      <Stack.Screen name="SignIn" component={SignInScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
+
+      {/* Mostrar AuthStack solo si el usuario no está autenticado */}
+      {!user && (
+        <Stack.Screen name="AuthStack" component={AuthStack} />
+      )}
     </Stack.Navigator>
   );
 };

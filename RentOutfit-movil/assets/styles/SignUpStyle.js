@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window'); // Obtener el ancho de la pantalla
 
 const styles = StyleSheet.create({
   container: {
@@ -12,6 +14,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
+  },
+  page: {
+    width: width, // Ocupa el ancho completo de la pantalla
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
