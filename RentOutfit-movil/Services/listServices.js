@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Alert } from 'react-native';
 
 const API_URL = 'http://moiseshc-001-site1.ktempurl.com'; // URL base de tu API
 
@@ -8,6 +9,7 @@ export const listGeneros = async () => {
     const response = await axios.post(`${API_URL}/Listas/ObtenerGeneros`);
     return response.data;
   } catch (error) {
+    Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
     console.error('Error al obtener géneros:', error);
     throw error;
   }
@@ -19,6 +21,7 @@ export const listEstados = async () => {
     const response = await axios.post(`${API_URL}/Listas/ObtenerEstados`);
     return response.data;
   } catch (error) {
+    Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
     console.error('Error al obtener estados:', error);
     throw error;
   }
@@ -34,6 +37,7 @@ export const listMunicipios = async (estadoId) => {
       });
       return response.data;
     } catch (error) {
+      Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
       console.error('Error al obtener municipios:', error);
       throw error;
     }
