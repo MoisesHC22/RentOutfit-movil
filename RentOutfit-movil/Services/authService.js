@@ -17,12 +17,17 @@ export const login = async (email, password) => {
 };
 
 // Función para registrar usuario
-export const register = async (userData) => {
+export const register = async (formData) => {
   try {
-    const response = await axios.post(`${API_URL}/Cliente/RegistrarCliente`, userData);
+    const response = await axios.post(`${API_URL}/Cliente/RegistrarCliente`, formData, {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
-    console.error('Error registering user', error);
+    console.error('Error al registrar el usuario:', error.response ? error.response.data : error.message);
     throw error;
   }
 };

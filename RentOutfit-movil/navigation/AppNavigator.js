@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from '../context/AuthContext'; // Importar el contexto de autenticación
-
 import SplashScreen from '../screens/Splash/SplashScreen';
 import AuthStack from '../screens/Auth/AuthStack'; // Stack de autenticación
 import MainStack from './MainStack'; // Pantallas principales de la app
