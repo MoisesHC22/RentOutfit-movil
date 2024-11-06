@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://moiseshc-001-site1.ktempurl.com'; // URL base de tu API
+const API_URL = 'https://rentoutfit-apis.onrender.com'; // URL base de tu API
+
 
 // Función para obtener los establecimientos cercanos
 export const obtenerEstablecimientosCercanos = async (estado, municipio) => {

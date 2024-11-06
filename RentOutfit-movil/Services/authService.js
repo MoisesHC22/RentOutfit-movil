@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://moiseshc-001-site1.ktempurl.com'; // URL base de tu API
+const API_URL = 'https://rentoutfit-apis.onrender.com'; // URL base de tu API
+
 
 // Función para iniciar sesión
 export const login = async (email, password) => {
@@ -28,6 +29,17 @@ export const register = async (formData) => {
     return response.data;
   } catch (error) {
     console.error('Error al registrar el usuario:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+export const recoverPassword = async (email) => {
+  try {
+    const response = await axios.post(`${API_URL}/RecuperarContrasena/ObtenerToken`, { 
+      "email":email 
+    });
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };

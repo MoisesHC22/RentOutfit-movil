@@ -1,5 +1,6 @@
 import { validateEmail } from '../components/Validaciones/validateEmail'; // Importar la validación
-import { login as loginService, register as registerService } from './authService'; // Importar correctamente la función login
+import { validatePassword } from '../components/Validaciones/validatePassword';
+import { login as loginService, register as registerService, recoverPassword as recoverPasswordService } from './authService'; // Importar correctamente la función login
 
 // Lógica de manejo del inicio de sesión
 export const handleLogin = async (email, password, navigation, setErrorMessage) => {
@@ -28,43 +29,35 @@ export const handleLogin = async (email, password, navigation, setErrorMessage) 
 export const handleSignup = async (userData, setIsLoading) => {
   // Validar todos los campos antes de enviar
   if (!userData.nombreCliente.trim()) {
-    Alert.alert('Error', 'El nombre no puede estar vacío.');
-    return null;
+    return 'El nombre no puede estar vacío.';
   }
 
   if (!userData.apellidoPaterno.trim()) {
-    Alert.alert('Error', 'El apellido paterno no puede estar vacío.');
-    return null;
+    return 'El apellido paterno no puede estar vacío.';
   }
 
   if (!userData.apellidoMaterno.trim()) {
-    Alert.alert('Error', 'El apellido materno no puede estar vacío.');
-    return null;
+    return 'El apellido materno no puede estar vacío.';
   }
 
   if (!validateEmail(userData.email)) {
-    Alert.alert('Error', 'Por favor ingresa un correo electrónico válido.');
-    return null;
+    return 'Por favor ingresa un correo electrónico válido.';
   }
 
   if (!userData.telefono.trim() || userData.telefono.length < 10) {
-    Alert.alert('Error', 'Por favor ingresa un número de teléfono válido (mínimo 10 dígitos).');
-    return null;
+    return 'Por favor ingresa un número de teléfono válido (mínimo 10 dígitos).';
   }
 
-  if (!userData.contraseña || userData.contraseña.length < 8) {
-    Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres.');
-    return null;
+  if (!validatePassword(contraseña)) {
+    return 'La contraseña debe tener al menos una mayúscula, dos números y 8 caracteres.';
   }
 
   if (!userData.selectedGenero) {
-    Alert.alert('Error', 'Por favor selecciona tu género.');
-    return null;
+    return 'Por favor selecciona tu género.';
   }
 
   if (!userData.imagen) {
-    Alert.alert('Error', 'Por favor selecciona una imagen antes de continuar.');
-    return null;
+    return 'Por favor selecciona una imagen antes de continuar.';
   }
 
   setIsLoading(true);
@@ -101,4 +94,16 @@ export const handleSignup = async (userData, setIsLoading) => {
   }
 };
 
+export const handlerecoverPassword = async (email) => {
+  try {
+    const response = await recoverPasswordService(email);
+    if (response != null) {
+      return response; // Devuelve el response en caso de éxito
+    } else {
+      return null; // Devuelve null si no se encuentra el usuario
+    }
+  } catch (error) {
+    setErrorMessage('Error al encontrar el correo. Inténtalo de nuevo más tarde.');
+  }
+};
 

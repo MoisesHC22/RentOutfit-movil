@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Alert } from 'react-native';
 
-const API_URL = 'http://moiseshc-001-site1.ktempurl.com'; // URL base de tu API
+const API_URL = 'https://rentoutfit-apis.onrender.com'; // URL base de tu API
+
 
 // Función para obtener géneros
 export const listGeneros = async () => {
@@ -9,7 +10,6 @@ export const listGeneros = async () => {
     const response = await axios.post(`${API_URL}/Listas/ObtenerGeneros`);
     return response.data;
   } catch (error) {
-    Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
     console.error('Error al obtener géneros:', error);
     throw error;
   }

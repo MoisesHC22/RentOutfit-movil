@@ -80,6 +80,12 @@ export default function SignInScreen({ navigation }) {
           >
             <Text style={styles.loginButtonText}>Iniciar sesión</Text>
           </TouchableOpacity>
+          {/* Enlace para recuperar contraseña */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Recover')}
+          >
+            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
         </View>
         {/* Modal personalizado */}
         <Modal isVisible={isModalVisible} animationIn="slideInUp" animationOut="slideOutDown">
