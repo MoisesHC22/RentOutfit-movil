@@ -54,8 +54,8 @@ export default function HomeScreen() {
 
   const fetchEstablecimientos = async () => {
     try {
-      const estado = 'Mexico';
-      const municipio = 'Huehuetoca';
+      const estado = 'Hidalgo';
+      const municipio = 'Tula de Allende';
       const pagina = 0;
       const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
 

@@ -50,8 +50,8 @@ export default function VestimentasScreen() {
 
   const fetchVestimentas = async () => {
     try {
-      const estado = 'Mexico';
-      const municipio = 'Huehuetoca';
+      const estado = 'Hidalgo';
+      const municipio = 'Tula de Allende';
       const pagina = 0;
       const response = await obtenerVestimentas(estado, municipio, pagina);
       setVestimentas(response);
