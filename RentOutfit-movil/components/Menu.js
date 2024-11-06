@@ -2,18 +2,24 @@ import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient'; // Importa LinearGradient
 import { AuthContext } from '../context/AuthContext'; // Importar el contexto de autenticación
 
-// Menú lateral con diseño mejorado
+// Menú lateral con diseño mejorado y fondo degradado
 export default function SideMenu({ closeMenu }) {
   const navigation = useNavigation(); // Obtener la funcionalidad de navegación
   const { user } = useContext(AuthContext); // Obtener el estado de autenticación
 
   return (
-    <View style={styles.menuContainer}>
+    <LinearGradient
+      colors={['#0180CB', '#FFFFFF']} // Configura el degradado de azul a blanco
+      style={styles.menuContainer}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
       {/* Botón para cerrar el menú */}
       <TouchableOpacity style={styles.closeButton} onPress={closeMenu}>
-        <Ionicons name="close" size={32} color="#fff" />
+        <Ionicons name="close" size={32} color="000000" />
         <Text style={styles.closeText}>Cerrar</Text>
       </TouchableOpacity>
 
@@ -22,7 +28,7 @@ export default function SideMenu({ closeMenu }) {
         closeMenu();
         navigation.navigate('Home'); // Navegar a la pantalla de inicio
       }}>
-        <Ionicons name="home" size={24} color="#007AFF" />
+        <Ionicons name="home" size={24} color="#000000" />
         <Text style={styles.menuText}>Inicio</Text>
       </TouchableOpacity>
 
@@ -39,12 +45,12 @@ export default function SideMenu({ closeMenu }) {
           navigation.navigate('AuthStack', { screen: 'Login' });
         }
       }}>
-        <Ionicons name="cart" size={24} color="#007AFF" />
+        <Ionicons name="cart" size={24} color="#000000" />
         <Text style={styles.menuText}>Carrito</Text>
       </TouchableOpacity>
 
       {/* Otros botones... */}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -55,7 +61,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: '70%',
-    backgroundColor: '#1c1c1e', // Fondo oscuro
     paddingTop: 50,
     zIndex: 10, // Asegura que el menú esté encima de otros componentes
     borderRightWidth: 1,
