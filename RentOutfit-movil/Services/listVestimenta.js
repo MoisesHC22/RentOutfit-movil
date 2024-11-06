@@ -1,17 +1,17 @@
 import axios from 'axios';
 
-const API_URL = 'http://moiseshc-001-site1.ktempurl.com'; // URL base de tu API
+const API_URL = 'http://moiseshc-001-site1.ktempurl.com/Cliente/MostrarVestimentas';
 
-// Función para obtener los establecimientos cercanos
-export const obtenerVestimentas = async (estado, municipio,) => {
+export const obtenerVestimentas = async (estado, municipio, pagina) => {
   try {
-    const response = await axios.post(`${API_URL}/Cliente/MostrarVestimenta`, {
-      estado: estado,
-      municipio: municipio,
+    const response = await axios.post(API_URL, {
+      estado,
+      municipio,
+      pagina,
     });
-    return response.data; // Retorna los datos de los establecimientos
+    return response.data;
   } catch (error) {
-    console.error('Error al obtener los establecimientos cercanos', error);
-    throw error; // Lanza el error para manejarlo en otro lado
+    console.error('Error al obtener las vestimentas:', error);
+    throw error;
   }
 };

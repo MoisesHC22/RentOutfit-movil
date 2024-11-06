@@ -1,25 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import SideMenu from '../../components/Menu'; // Asegúrate de que la ruta sea correcta
-import { obtenerUbicacion } from '../../Services/Location/locateService'; // Importa la clase de obtenerUbicacion.js
-import { obtenerEstablecimientosCercanos } from '../../Services/listEstablecimientos'; // Importa la función de la API
+import { useNavigation } from '@react-navigation/native';
+import SideMenu from '../../components/Menu';
+import { obtenerUbicacion } from '../../Services/Location/locateService';
+import { obtenerEstablecimientosCercanos } from '../../Services/listEstablecimientos';
 
 const { width } = Dimensions.get('window');
 
-export default function App() {
+const EstablecimientoCard = memo(({ item }) => (
+  <View style={styles.card}>
+    {item.linkImagenEstablecimiento ? (
+      <Image 
+        source={{ uri: item.linkImagenEstablecimiento }}
+        style={styles.cardImage}
+        resizeMode="contain" // Ajusta la imagen dentro de los bordes de la tarjeta
+      />
+    ) : (
+      <View style={styles.placeholderContainer}>
+        <Text style={styles.placeholderText}>Imagen no disponible</Text>
+      </View>
+    )}
+    <Text style={styles.cardTitle}>{item.nombreEstablecimiento}</Text> 
+    <Text style={styles.cardDetail}>Calle: {item.calle}</Text>
+    <Text style={styles.cardDetail}>Estado: {item.nombreEstado}</Text>
+    <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio}</Text>
+    <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal}</Text>
+  </View>
+));
+
+export default function HomeScreen() {
+  const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
   const [codigoPostal, setCodigoPostal] = useState('');
   const [establecimientos, setEstablecimientos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Alternar el menú lateral
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
   };
 
-  // Función para manejar la acción de presionar el icono de ubicación
   const handleLocationPress = async () => {
     try {
       const { ubicacion, codigoPostal } = await obtenerUbicacion();
@@ -31,60 +52,55 @@ export default function App() {
     }
   };
 
-  // Función para hacer la solicitud a la API y obtener los establecimientos cercanos
   const fetchEstablecimientos = async () => {
     try {
-      const estado = 'Hidalgo'; // Reemplazar con un valor válido
-      const municipio = 'Tula de Allende'; // Reemplazar con un valor válido
+      const estado = 'Mexico';
+      const municipio = 'Huehuetoca';
       const pagina = 0;
       const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
-      
-      console.log("Datos obtenidos de la API:", response); // Verifica los datos recibidos
 
-      setEstablecimientos(response); // Guardamos los datos en el estado
-      setLoading(false); // Desactivamos el estado de cargando
+      setEstablecimientos(response);
+      setLoading(false);
     } catch (error) {
       console.error('Error al obtener los establecimientos', error);
-      setLoading(false); // Desactivamos el estado de cargando
+      setLoading(false);
     }
   };
 
-  // Usar useEffect para hacer la solicitud al cargar la pantalla
   useEffect(() => {
     fetchEstablecimientos();
   }, []);
 
-  // Función para cerrar el modal
   const closeModal = () => {
     setUbicacionModalVisible(false);
   };
 
-  // Función para cerrar el menú si se hace clic fuera de él
   const handleOutsidePress = () => {
     if (menuVisible) {
-      setMenuVisible(false); // Cierra el menú si está abierto
+      setMenuVisible(false);
     }
   };
 
-  // Renderizado del encabezado fijo (menú, barra de búsqueda y botón de ubicación)
   const renderFixedHeader = () => (
     <View style={styles.fixedHeader}>
       <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
         <Ionicons name="menu" size={32} color="black" />
       </TouchableOpacity>
-      <TextInput style={styles.searchBox} placeholder="Buscar local o vestimenta" />
+      <TextInput style={styles.searchBox} placeholder="Buscar vestimenta" />
       <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
         <Ionicons name="location" size={32} color="black" />
       </TouchableOpacity>
     </View>
   );
 
-  // Renderizado de los botones de categorías
   const renderCategories = () => (
     <View style={styles.categoryContainer}>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="shirt-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Ropa formal</Text>
+      <TouchableOpacity 
+        style={styles.categoryButton} 
+        onPress={() => navigation.navigate('VestimentasScreen')}
+      >
+        <Ionicons name="shirt-outline" size={28} color="white" />
+        <Text style={styles.categoryText}>Prendas</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.categoryButton}>
         <Ionicons name="footsteps-outline" size={28} color="white" style={styles.categoryIcon} />
@@ -101,34 +117,20 @@ export default function App() {
     </View>
   );
 
+  const renderItem = ({ item }) => <EstablecimientoCard item={item} />;
+
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <SafeAreaView style={styles.safeArea}>
         {menuVisible && <SideMenu closeMenu={toggleMenu} />}
-        
-        {/* Encabezado fijo */}
+
         {renderFixedHeader()}
 
-        {/* Contenido desplazable */}
         <FlatList
           data={establecimientos}
           keyExtractor={(item, index) => index.toString()}
-          ListHeaderComponent={renderCategories} // Muestra los botones de categorías como encabezado de la lista
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              {/* Mostrar la imagen del establecimiento */}
-              <Image 
-                source={{ uri: item.linkImagenEstablecimiento }}
-                style={styles.cardImage}
-              />
-              {/* Detalles del establecimiento */}
-              <Text style={styles.cardTitle}>{item.nombreEstablecimiento}</Text> 
-              <Text style={styles.cardDetail}>Calle: {item.calle}</Text>
-              <Text style={styles.cardDetail}>Estado: {item.nombreEstado}</Text>
-              <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio}</Text>
-              <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal}</Text>
-            </View>
-          )}
+          ListHeaderComponent={renderCategories}
+          renderItem={renderItem}
           ListEmptyComponent={() => (
             loading ? (
               <Text style={styles.loadingText}>Cargando establecimientos...</Text>
@@ -136,10 +138,14 @@ export default function App() {
               <Text style={styles.noDataText}>No se encontraron establecimientos cercanos.</Text>
             )
           )}
-          contentContainerStyle={styles.listContent}
+          initialNumToRender={5}
+          windowSize={5}
+          maxToRenderPerBatch={2}
+          updateCellsBatchingPeriod={100}
+          removeClippedSubviews={true}
+          contentContainerStyle={styles.listContentCentered} // Centrar contenido
         />
 
-        {/* Modal para mostrar el código postal */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -176,10 +182,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     paddingTop: 40,
-    zIndex: 1, // Asegura que el encabezado esté encima del contenido scrolleable
+    zIndex: 1,
   },
-  listContent: {
+  listContentCentered: {
     paddingBottom: 20,
+    alignItems: 'center', // Centra las tarjetas en el FlatList
   },
   menuButton: {
     marginRight: 15,
@@ -230,7 +237,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
-    marginHorizontal: 10,
+    width: width * 0.9,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -239,7 +246,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 150,
+    height: 100,
     borderRadius: 10,
     marginBottom: 10,
   },
@@ -251,6 +258,18 @@ const styles = StyleSheet.create({
   cardDetail: {
     fontSize: 14,
     color: '#333',
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: 100,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ddd',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#888',
   },
   loadingText: {
     textAlign: 'center',
