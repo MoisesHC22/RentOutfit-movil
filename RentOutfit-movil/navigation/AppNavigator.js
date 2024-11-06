@@ -4,6 +4,10 @@ import { AuthContext } from '../context/AuthContext'; // Importar el contexto de
 import SplashScreen from '../screens/Splash/SplashScreen';
 import AuthStack from '../screens/Auth/AuthStack'; // Stack de autenticación
 import MainStack from './MainStack'; // Pantallas principales de la app
+import TermsAndConditionsScreen from '../screens/Legal/TermsAndConditionsScreen';
+import PrivacyPolicyScreen from '../screens/Legal/PrivacyPolicyScreen';
+import RecoverPasswordScreenScreen from '../screens/Auth/RecoverScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +20,11 @@ const AppNavigator = () => {
       
       {/* Mostrar siempre el MainStack */}
       <Stack.Screen name="MainStack" component={MainStack} />
+
+       {/* Agregar las pantallas de Términos y Política de Privacidad */}
+       <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="Recover" component={RecoverPasswordScreenScreen} />
 
       {/* Mostrar AuthStack solo si el usuario no está autenticado */}
       {!user && (

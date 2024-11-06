@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Image, Dimensions, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, Modal } from 'react-native';
-import { validateEmail } from '../../components/Validaciones/validateEmail';
 import Checkbox from 'expo-checkbox';
 import RNPickerSelect from 'react-native-picker-select';
 import { StatusBar } from 'expo-status-bar';
@@ -38,15 +37,6 @@ export default function SignupScreen({ navigation }) {
 
   const scrollViewRef = useRef(null);
 
-  // Función para validar la contraseña (al menos una mayúscula, dos números y 8 caracteres)
-  const validarContraseña = (contraseña) => {
-    const mayuscula = /[A-Z]/;
-    const numeros = /\d.*\d/; // Al menos dos dígitos
-    const longitud = /.{8,}/; // Mínimo 8 caracteres
-    return mayuscula.test(contraseña) && numeros.test(contraseña) && longitud.test(contraseña);
-  };
-  
-
   const seleccionarImagen = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -63,13 +53,12 @@ export default function SignupScreen({ navigation }) {
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
-        console.log('Imagen seleccionada:', manipResult.uri);
         setImagen(manipResult.uri);
       } else {
-        console.log('Selección de imagen cancelada o sin URI');
+        Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
       }
     } catch (error) {
-      console.error('Error al seleccionar o manipular la imagen:', error);
+      Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
     }
   };
 
@@ -78,15 +67,13 @@ export default function SignupScreen({ navigation }) {
     try {
       // Verificar si las contraseñas coinciden
       if (contraseña !== confirmarContraseña) {
-        Alert.alert('Error', 'Las contraseñas no coinciden.');
+        setModalMessage('Las contraseñas no coinciden.');
+        setModalType('error');
+        setModalVisible(true);
         return;
       }
 
-      // Verificar si la contraseña cumple con los requisitos
-      if (!validarContraseña(contraseña)) {
-        Alert.alert('Error', 'La contraseña debe tener al menos una mayúscula, dos números y 8 caracteres.');
-        return;
-      }
+
 
       // Datos del usuario a enviar
       const userData = {
@@ -102,13 +89,25 @@ export default function SignupScreen({ navigation }) {
 
       // Llamar a la función register del servicio
       const result = await handleSignup(userData, setIsLoading);
-      if (result != null) {
-        Alert.alert('Éxito', 'Cuenta creada exitosamente.');
-        navigation.navigate('SignIn');
+      if (typeof result === 'string') {
+        setModalMessage(result); // Mostrar mensaje de error específico devuelto por handleSignup
+        setModalType('error');
+        setModalVisible(true);
+      } else {
+        // Registro exitoso
+        setModalMessage('Cuenta creada exitosamente.');
+        setModalType('success');
+        setModalVisible(true);
+        setTimeout(() => {
+          setModalVisible(false);
+          navigation.navigate('Login');
+        }, 3000);
       }
     } catch (error) {
-      Alert.alert('Error', 'Hubo un problema al crear la cuenta. Inténtalo de nuevo.');
-      console.error('Error al crear la cuenta:', error);
+      setModalMessage('Hubo un problema al crear la cuenta. Inténtalo de nuevo.');
+      console.log(error);
+      setModalType('error');
+      setModalVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +118,7 @@ export default function SignupScreen({ navigation }) {
       const generosResponse = await listGeneros();
       setGeneros(generosResponse);
     } catch (error) {
-      console.error('Error al obtener los datos:', error);
-      Alert.alert('Error', 'No se pudieron cargar los géneros. Por favor, intenta de nuevo.');
+      Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
     }
   };
 
@@ -319,7 +317,7 @@ export default function SignupScreen({ navigation }) {
                 <Text style={styles.checkboxLabel}>
                   Acepto los{' '}
                   <Text style={styles.link} onPress={() => navigation.navigate('Terms')}>
-                    Términos y condiciones
+                    Términos & condiciones
                   </Text>
                   {' '}y la{' '}
                   <Text style={styles.link} onPress={() => navigation.navigate('PrivacyPolicy')}>
@@ -338,20 +336,56 @@ export default function SignupScreen({ navigation }) {
                 <Text style={styles.backButtonText}>Atrás</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, (!isChecked || isLoading) && styles.disabledButton]}
+                style={[
+                  styles.button,
+                  styles.createAccountButton,
+                  (!isChecked || isLoading) && styles.disabledButton
+                ]}
                 onPress={onSignup}
                 disabled={!isChecked || isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color="#0c4a6e" />
                 ) : (
-                  <Text style={styles.buttonText}>Crear Cuenta</Text>
+                  <Text style={[
+                    styles.buttonText,
+                    (!isChecked || isLoading) && styles.disabledButtonText
+                  ]}>
+                    Crear Cuenta
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
       </LinearGradient>
+      {/* Modal de alerta */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(!modalVisible)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Ionicons
+              name={modalType === 'success' ? "checkmark-circle-outline" : "warning-outline"}
+              size={48}
+              color={modalType === 'success' ? "green" : "red"}
+              style={styles.modalIcon}
+            />
+            <Text style={styles.modalText}>{modalMessage}</Text>
+            {modalType === 'error' && (
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textStyle}>Cerrar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

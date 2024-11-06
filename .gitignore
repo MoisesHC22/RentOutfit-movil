@@ -1,1 +1,11 @@
 node_modules/
+# Ignorar archivos generados por EAS Build
+build/
+builds/
+.dist/
+build.json
+# Ignorar archivos de Expo
+.expo/
+.expo-shared/
+
+RentOutfit-movil/eas.json

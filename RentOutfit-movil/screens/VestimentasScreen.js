@@ -1,18 +1,17 @@
 import React, { useState, useEffect, memo } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import SideMenu from '../../components/Menu';
-import { obtenerUbicacion } from '../../Services/Location/locateService';
-import { obtenerEstablecimientosCercanos } from '../../Services/listEstablecimientos';
+import SideMenu from '../components/Menu';
+import { obtenerUbicacion } from '../Services/Location/locateService';
+import { obtenerVestimentas } from '../Services/listVestimenta';
 
 const { width } = Dimensions.get('window');
 
-const EstablecimientoCard = memo(({ item }) => (
+const VestimentaCard = memo(({ item }) => (
   <View style={styles.card}>
-    {item.linkImagenEstablecimiento ? (
+    {item.imagen1 ? (
       <Image 
-        source={{ uri: item.linkImagenEstablecimiento }}
+        source={{ uri: item.imagen1 }}
         style={styles.cardImage}
         resizeMode="contain" // Ajusta la imagen dentro de los bordes de la tarjeta
       />
@@ -21,20 +20,17 @@ const EstablecimientoCard = memo(({ item }) => (
         <Text style={styles.placeholderText}>Imagen no disponible</Text>
       </View>
     )}
-    <Text style={styles.cardTitle}>{item.nombreEstablecimiento}</Text> 
-    <Text style={styles.cardDetail}>Calle: {item.calle}</Text>
-    <Text style={styles.cardDetail}>Estado: {item.nombreEstado}</Text>
-    <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio}</Text>
-    <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal}</Text>
+    <Text style={styles.cardTitle}>{item.nombrePrenda}</Text>
+    <Text style={styles.cardDetail}>Descripción: {item.descripcion}</Text>
+    <Text style={styles.cardDetail}>Establecimiento: {item.nombreEstablecimiento}</Text>
   </View>
 ));
 
-export default function HomeScreen() {
-  const navigation = useNavigation();
+export default function VestimentasScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
   const [codigoPostal, setCodigoPostal] = useState('');
-  const [establecimientos, setEstablecimientos] = useState([]);
+  const [vestimentas, setVestimentas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const toggleMenu = () => {
@@ -52,23 +48,22 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchEstablecimientos = async () => {
+  const fetchVestimentas = async () => {
     try {
       const estado = 'Hidalgo';
       const municipio = 'Tula de Allende';
       const pagina = 0;
-      const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
-
-      setEstablecimientos(response);
+      const response = await obtenerVestimentas(estado, municipio, pagina);
+      setVestimentas(response);
       setLoading(false);
     } catch (error) {
-      console.error('Error al obtener los establecimientos', error);
+      console.error('Error al obtener las vestimentas', error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEstablecimientos();
+    fetchVestimentas();
   }, []);
 
   const closeModal = () => {
@@ -93,32 +88,6 @@ export default function HomeScreen() {
     </View>
   );
 
-  const renderCategories = () => (
-    <View style={styles.categoryContainer}>
-      <TouchableOpacity 
-        style={styles.categoryButton} 
-        onPress={() => navigation.navigate('VestimentasScreen')}
-      >
-        <Ionicons name="shirt-outline" size={28} color="white" />
-        <Text style={styles.categoryText}>Prendas</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="footsteps-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Calzado</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="man-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Hombre</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="woman-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Mujer</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderItem = ({ item }) => <EstablecimientoCard item={item} />;
-
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <SafeAreaView style={styles.safeArea}>
@@ -127,15 +96,14 @@ export default function HomeScreen() {
         {renderFixedHeader()}
 
         <FlatList
-          data={establecimientos}
+          data={vestimentas}
           keyExtractor={(item, index) => index.toString()}
-          ListHeaderComponent={renderCategories}
-          renderItem={renderItem}
+          renderItem={({ item }) => <VestimentaCard item={item} />}
           ListEmptyComponent={() => (
             loading ? (
-              <Text style={styles.loadingText}>Cargando establecimientos...</Text>
+              <Text style={styles.loadingText}>Cargando vestimentas...</Text>
             ) : (
-              <Text style={styles.noDataText}>No se encontraron establecimientos cercanos.</Text>
+              <Text style={styles.noDataText}>No se encontraron vestimentas disponibles.</Text>
             )
           )}
           initialNumToRender={5}
@@ -204,34 +172,6 @@ const styles = StyleSheet.create({
   locationButton: {
     marginLeft: 10,
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-  },
-  categoryButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 15,
-    width: width * 0.4,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  categoryIcon: {
-    marginBottom: 10,
-  },
-  categoryText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
   card: {
     backgroundColor: '#fff',
     padding: 15,
@@ -246,7 +186,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 100,
+    height: 100, // Ajusta la altura de la imagen a 100 para que se vea proporcional
     borderRadius: 10,
     marginBottom: 10,
   },
