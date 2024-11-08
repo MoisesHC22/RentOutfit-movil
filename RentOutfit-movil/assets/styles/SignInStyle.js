@@ -27,6 +27,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
+  },  
   header: {
     backgroundColor: 'transparent',
     height: height * 0.3, // 25% del alto de la pantalla para el encabezado

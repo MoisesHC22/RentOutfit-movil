@@ -29,6 +29,7 @@ export default function SignupScreen({ navigation }) {
   const [selectedGenero, setSelectedGenero] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  
 
   // Estado para controlar el modal y su tipo (éxito o error)
   const [modalVisible, setModalVisible] = useState(false);
@@ -55,10 +56,14 @@ export default function SignupScreen({ navigation }) {
         );
         setImagen(manipResult.uri);
       } else {
-        Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
+        setModalMessage('Verifica la conexión a internet.');
+        setModalType('Error de conexión');
+        setModalVisible(true);
       }
     } catch (error) {
-      Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
+      setModalMessage('Verifica la conexión a internet.');
+      setModalType('Error de conexión');
+      setModalVisible(true);
     }
   };
 
@@ -72,8 +77,6 @@ export default function SignupScreen({ navigation }) {
         setModalVisible(true);
         return;
       }
-
-
 
       // Datos del usuario a enviar
       const userData = {
@@ -145,6 +148,10 @@ export default function SignupScreen({ navigation }) {
     }
   };
 
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -157,6 +164,9 @@ export default function SignupScreen({ navigation }) {
       >
         <StatusBar style="light" />
         <View style={styles.header}>
+        <TouchableOpacity style={styles.backArrowContainer} onPress={handleBackPress}>
+            <Ionicons name="arrow-back" size={28} color="#fff" />
+          </TouchableOpacity>
           <View style={styles.progressContainer}>
             {[0, 1, 2].map((step) => (
               <React.Fragment key={step}>
@@ -246,9 +256,16 @@ export default function SignupScreen({ navigation }) {
                 placeholderTextColor="#999"
                 keyboardType="phone-pad"
                 value={telefono}
-                onChangeText={setTelefono}
+                onChangeText={(text) => {
+                  // Solo permite actualizar el estado si el texto tiene 10 o menos dígitos
+                  if (text.length <= 10) {
+                    setTelefono(text);
+                  }
+                }}
+                maxLength={10} // Opcional: limita la longitud de caracteres
               />
             </View>
+
             <View style={styles.navigationButtons}>
               <TouchableOpacity style={styles.backButton} onPress={goToPreviousPage}>
                 <Text style={styles.backButtonText}>Atrás</Text>

@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext,useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Notifications from 'expo-notifications';
 import { AuthContext } from '../context/AuthContext'; // Importar el contexto de autenticación
 import SplashScreen from '../screens/Splash/SplashScreen';
 import AuthStack from '../screens/Auth/AuthStack'; // Stack de autenticación
@@ -13,6 +14,22 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   const { user } = useContext(AuthContext); // Obtener el usuario autenticado
+
+  useEffect(() => {
+    // Escuchar cuando se recibe una notificación
+    const notificationListener = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data.screen;
+      if (screen) {
+        navigation.navigate(screen); // Redirige a la pantalla especificada en el contenido de la notificación
+      }
+    });
+
+    return () => {
+      // Remover el listener al desmontar el componente
+      notificationListener.remove();
+    };
+  }, []);
+
 
   return (
     <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
