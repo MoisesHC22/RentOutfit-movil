@@ -1,32 +1,38 @@
 import React, { useState, useEffect, memo } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import SideMenu from '../components/Menu';
 import { obtenerUbicacion } from '../Services/Location/locateService';
 import { obtenerVestimentas } from '../Services/listVestimenta';
 
 const { width } = Dimensions.get('window');
 
-const VestimentaCard = memo(({ item }) => (
+const VestimentaCard = memo(({ item, onPress }) => (
   <View style={styles.card}>
     {item.imagen1 ? (
       <Image 
         source={{ uri: item.imagen1 }}
         style={styles.cardImage}
-        resizeMode="contain" // Ajusta la imagen dentro de los bordes de la tarjeta
+        resizeMode="contain"
       />
     ) : (
       <View style={styles.placeholderContainer}>
         <Text style={styles.placeholderText}>Imagen no disponible</Text>
       </View>
     )}
-    <Text style={styles.cardTitle}>{item.nombrePrenda}</Text>
-    <Text style={styles.cardDetail}>Descripción: {item.descripcion}</Text>
-    <Text style={styles.cardDetail}>Establecimiento: {item.nombreEstablecimiento}</Text>
+    <View style={styles.cardContent}>
+      <Text style={styles.cardTitle}>{item.nombrePrenda}</Text>
+      <Text style={styles.cardDetail}>Establecimiento: {item.nombreEstablecimiento}</Text>
+      <TouchableOpacity style={styles.detailsButton} onPress={() => onPress(item.vestimentaID)}>
+        <Text style={styles.detailsButtonText}>Ver prenda</Text>
+      </TouchableOpacity>
+    </View>
   </View>
 ));
 
 export default function VestimentasScreen() {
+  const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
   const [codigoPostal, setCodigoPostal] = useState('');
@@ -76,6 +82,10 @@ export default function VestimentasScreen() {
     }
   };
 
+  const goToDetails = (id) => {
+    navigation.navigate('DetallesPrenda', { id });
+  };
+
   const renderFixedHeader = () => (
     <View style={styles.fixedHeader}>
       <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
@@ -98,7 +108,7 @@ export default function VestimentasScreen() {
         <FlatList
           data={vestimentas}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => <VestimentaCard item={item} />}
+          renderItem={({ item }) => <VestimentaCard item={item} onPress={goToDetails} />}
           ListEmptyComponent={() => (
             loading ? (
               <Text style={styles.loadingText}>Cargando vestimentas...</Text>
@@ -111,7 +121,7 @@ export default function VestimentasScreen() {
           maxToRenderPerBatch={2}
           updateCellsBatchingPeriod={100}
           removeClippedSubviews={true}
-          contentContainerStyle={styles.listContentCentered} // Centrar contenido
+          contentContainerStyle={styles.listContentCentered}
         />
 
         <Modal
@@ -138,6 +148,18 @@ export default function VestimentasScreen() {
 }
 
 const styles = StyleSheet.create({
+  detailsButton: {
+    backgroundColor: '#0180CB',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  detailsButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
@@ -154,7 +176,8 @@ const styles = StyleSheet.create({
   },
   listContentCentered: {
     paddingBottom: 20,
-    alignItems: 'center', // Centra las tarjetas en el FlatList
+    alignItems: 'center',
+    paddingTop: 20,
   },
   menuButton: {
     marginRight: 15,
@@ -174,7 +197,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    padding: 15,
+    flexDirection: 'row',
+    padding: 10,
     borderRadius: 10,
     marginBottom: 15,
     width: width * 0.9,
@@ -185,10 +209,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardImage: {
-    width: '100%',
-    height: 100, // Ajusta la altura de la imagen a 100 para que se vea proporcional
+    width: 100,
+    height: 100,
     borderRadius: 10,
-    marginBottom: 10,
+    marginRight: 10,
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: 'center',
   },
   cardTitle: {
     fontSize: 18,
@@ -200,12 +228,13 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   placeholderContainer: {
-    width: '100%',
+    width: 100,
     height: 100,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ddd',
+    marginRight: 10,
   },
   placeholderText: {
     fontSize: 14,
