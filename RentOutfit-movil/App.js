@@ -1,14 +1,12 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/AuthContext';
 import * as Notifications from 'expo-notifications';
+import { navigationRef } from './navigation/RootNavigation'; // Importa el navigationRef
 import { obtenerUbicacion } from './Services/Location/locateService';
-
-// Define a navigation reference for navigating from notifications
-import { navigationRef } from './navigation/RootNavigation'; // Make sure you create and export `navigationRef` in RootNavigation.js
+import { View, Text, ActivityIndicator, Alert, Linking } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -20,8 +18,6 @@ Notifications.setNotificationHandler({
 
 const App = () => {
   const [locationGranted, setLocationGranted] = useState(null);
-  const notificationListener = useRef();
-  const responseListener = useRef();
 
   useEffect(() => {
     const requestLocation = async () => {
@@ -29,10 +25,15 @@ const App = () => {
         const location = await obtenerUbicacion();
         setLocationGranted(true);
       } catch (error) {
+        // Permiso denegado o error en la obtención de la ubicación
+        setLocationGranted(null);
         Alert.alert(
           'Permiso de Ubicación Requerido',
-          'La aplicación necesita acceso a la ubicación para funcionar.',
-          [{ text: 'Reintentar', onPress: requestLocation }]
+          'La aplicación necesita acceso a la ubicación para funcionar. Por favor, otorga permisos de ubicación en Configuración.',
+          [
+            { text: 'Abrir Configuración', onPress: () => Linking.openSettings() },
+            { text: 'Reintentar', onPress: requestLocation },
+          ]
         );
       }
     };
@@ -41,40 +42,33 @@ const App = () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status === 'granted') {
         console.log('Permisos de notificación concedidos');
-        
-        // Schedule the notification to repeat every 30 minutes
         await Notifications.cancelAllScheduledNotificationsAsync();
         await Notifications.scheduleNotificationAsync({
           content: {
             title: "Revisa los nuevos trajes 🎉",
             body: "¡Tenemos nuevos trajes que podrían interesarte!",
-            data: { screen: 'VestimentasScreen' },
+            data: { screen: 'VestimentasScreen' }, // Pantalla a la que queremos redirigir
           },
-          trigger: { seconds: 100, repeats: true },
+          trigger: { seconds: 30, repeats: true },
         });
       }
     };
 
-    requestLocation();
+    // Llama a requestLocation hasta que se otorgue el permiso.
+    if (locationGranted === null) {
+      requestLocation();
+    }
+
     if (locationGranted) {
       requestPermissions();
     }
 
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notificación recibida:', notification);
-    });
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+    Notifications.addNotificationResponseReceivedListener(response => {
       const screen = response.notification.request.content.data.screen;
       if (screen) {
         navigationRef.current?.navigate(screen);
       }
     });
-
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener.current);
-      Notifications.removeNotificationSubscription(responseListener.current);
-    };
   }, [locationGranted]);
 
   if (locationGranted === null) {
