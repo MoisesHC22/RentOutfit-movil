@@ -19,6 +19,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  backArrowContainer: {
+    position: 'absolute',
+    top: height * 0.05, // Adjust based on your layout
+    left: 15,
+    zIndex: 1,
+  },  
   content: {
     flex: 1,
     padding: 20,

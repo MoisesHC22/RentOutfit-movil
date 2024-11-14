@@ -27,6 +27,12 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       paddingHorizontal: 20,
     },
+    backButton: {
+      position: 'absolute',
+      top: 40, // Adjust as needed for spacing
+      left: 20, // Adjust as needed for spacing
+      zIndex: 1,
+    },
     logo: {
       width: width * 0.7,
       height: height * 0.5,

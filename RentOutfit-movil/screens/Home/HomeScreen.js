@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SideMenu from '../../components/Menu';
@@ -14,18 +14,20 @@ const EstablecimientoCard = memo(({ item }) => (
       <Image 
         source={{ uri: item.linkImagenEstablecimiento }}
         style={styles.cardImage}
-        resizeMode="contain" // Ajusta la imagen dentro de los bordes de la tarjeta
+        resizeMode="contain"
       />
     ) : (
       <View style={styles.placeholderContainer}>
         <Text style={styles.placeholderText}>Imagen no disponible</Text>
       </View>
     )}
-    <Text style={styles.cardTitle}>{item.nombreEstablecimiento}</Text> 
-    <Text style={styles.cardDetail}>Calle: {item.calle}</Text>
-    <Text style={styles.cardDetail}>Estado: {item.nombreEstado}</Text>
-    <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio}</Text>
-    <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal}</Text>
+    <View style={styles.cardContent}>
+      <Text style={styles.cardTitle}>{item.nombreEstablecimiento || 'Nombre no disponible'}</Text> 
+      <Text style={styles.cardDetail}>Calle: {item.calle || 'No disponible'}</Text>
+      <Text style={styles.cardDetail}>Estado: {item.nombreEstado || 'No disponible'}</Text>
+      <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio || 'No disponible'}</Text>
+      <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal || 'No disponible'}</Text>
+    </View>
   </View>
 ));
 
@@ -39,6 +41,13 @@ export default function HomeScreen() {
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
+  };
+
+  const handleOutsidePress = () => {
+    if (menuVisible) {
+      setMenuVisible(false);
+      Keyboard.dismiss(); // Oculta el teclado en caso de estar visible
+    }
   };
 
   const handleLocationPress = async () => {
@@ -75,12 +84,6 @@ export default function HomeScreen() {
     setUbicacionModalVisible(false);
   };
 
-  const handleOutsidePress = () => {
-    if (menuVisible) {
-      setMenuVisible(false);
-    }
-  };
-
   const renderFixedHeader = () => (
     <View style={styles.fixedHeader}>
       <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
@@ -95,29 +98,23 @@ export default function HomeScreen() {
 
   const renderCategories = () => (
     <View style={styles.categoryContainer}>
-      <TouchableOpacity 
-        style={styles.categoryButton} 
-        onPress={() => navigation.navigate('VestimentasScreen')}
-      >
-        <Ionicons name="shirt-outline" size={28} color="white" />
-        <Text style={styles.categoryText}>Prendas</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="footsteps-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Calzado</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="man-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Hombre</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.categoryButton}>
-        <Ionicons name="woman-outline" size={28} color="white" style={styles.categoryIcon} />
-        <Text style={styles.categoryText}>Mujer</Text>
-      </TouchableOpacity>
+      {[
+        { name: 'Prendas', icon: 'shirt-outline', screen: 'VestimentasScreen' },
+        { name: 'Calzado', icon: 'footsteps-outline' },
+        { name: 'Hombre', icon: 'man-outline' },
+        { name: 'Mujer', icon: 'woman-outline' }
+      ].map((category, index) => (
+        <TouchableOpacity
+          key={index}
+          style={styles.categoryButton}
+          onPress={() => category.screen && navigation.navigate(category.screen)}
+        >
+          <Ionicons name={category.icon} size={32} color="white" />
+          <Text style={styles.categoryText}>{category.name}</Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
-
-  const renderItem = ({ item }) => <EstablecimientoCard item={item} />;
 
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
@@ -130,7 +127,7 @@ export default function HomeScreen() {
           data={establecimientos}
           keyExtractor={(item, index) => index.toString()}
           ListHeaderComponent={renderCategories}
-          renderItem={renderItem}
+          renderItem={({ item }) => <EstablecimientoCard item={item} />}
           ListEmptyComponent={() => (
             loading ? (
               <Text style={styles.loadingText}>Cargando establecimientos...</Text>
@@ -138,12 +135,7 @@ export default function HomeScreen() {
               <Text style={styles.noDataText}>No se encontraron establecimientos cercanos.</Text>
             )
           )}
-          initialNumToRender={5}
-          windowSize={5}
-          maxToRenderPerBatch={2}
-          updateCellsBatchingPeriod={100}
-          removeClippedSubviews={true}
-          contentContainerStyle={styles.listContentCentered} // Centrar contenido
+          contentContainerStyle={styles.listContentCentered}
         />
 
         <Modal
@@ -178,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0180CB',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     paddingTop: 40,
@@ -186,7 +178,7 @@ const styles = StyleSheet.create({
   },
   listContentCentered: {
     paddingBottom: 20,
-    alignItems: 'center', // Centra las tarjetas en el FlatList
+    alignItems: 'center',
   },
   menuButton: {
     marginRight: 15,
@@ -206,35 +198,35 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingVertical: 20,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
   },
   categoryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0180CB',
     padding: 15,
-    borderRadius: 15,
-    width: width * 0.4,
+    borderRadius: 50,
+    width: 80,
+    height: 80,
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  categoryIcon: {
-    marginBottom: 10,
+    marginHorizontal: 8,
   },
   categoryText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     color: 'white',
+    marginTop: 5,
   },
   card: {
     backgroundColor: '#fff',
-    padding: 15,
+    flexDirection: 'row',
+    padding: 10,
     borderRadius: 10,
     marginBottom: 15,
     width: width * 0.9,
@@ -245,10 +237,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardImage: {
-    width: '100%',
+    width: 100,
     height: 100,
     borderRadius: 10,
-    marginBottom: 10,
+    marginRight: 10,
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: 'center',
   },
   cardTitle: {
     fontSize: 18,
@@ -260,12 +256,13 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   placeholderContainer: {
-    width: '100%',
+    width: 100,
     height: 100,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ddd',
+    marginRight: 10,
   },
   placeholderText: {
     fontSize: 14,
@@ -310,7 +307,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#0180CB',
     marginBottom: 10,
   },
   modalText: {
@@ -321,11 +318,11 @@ const styles = StyleSheet.create({
   modalPostalCode: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#0180CB',
     marginBottom: 20,
   },
   closeButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0180CB',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
