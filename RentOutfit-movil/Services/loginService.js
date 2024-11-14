@@ -48,7 +48,7 @@ export const handleSignup = async (userData, setIsLoading) => {
     return 'Por favor ingresa un número de teléfono válido (mínimo 10 dígitos).';
   }
 
-  if (!validatePassword(contraseña)) {
+  if (!validatePassword(userData.contraseña)) {
     return 'La contraseña debe tener al menos una mayúscula, dos números y 8 caracteres.';
   }
 

@@ -66,15 +66,6 @@ const ShoppingCartScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         {/* Botón para cerrar sesión */}
-        <TouchableOpacity 
-          style={[styles.button, styles.logoutButton]}
-          onPress={() => {
-            logout();
-            navigation.navigate('Home');
-          }}
-        >
-          <Text style={styles.buttonText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

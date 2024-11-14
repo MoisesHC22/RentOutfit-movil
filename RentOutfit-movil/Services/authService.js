@@ -1,18 +1,26 @@
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 
 const API_URL = 'https://rentoutfit-apis.onrender.com'; // URL base de tu API
+const API_URL_CORREO = 'https://ro-api-soporte.onrender.com'; // URL base de tu API
 
 
 // Función para iniciar sesión
 export const login = async (email, password) => {
   try {
-    console.log(email, password);
     const response = await axios.post(`${API_URL}/Cliente/IniciarSesion`, {
       "email":email,
       "contrasena":password
     });
+    const token = response.data.token;
+    const decoded = jwtDecode(token);
+      // Si la autenticación es exitosa, envía una notificación por correo
+   if (response.data && response.data.token) {
+     await sendLoginNotificationEmail(email,decoded.nombre);
+    }
     return response.data;
   } catch (error) {
+    console.log(error);
     throw error;
   }
 };
@@ -39,6 +47,20 @@ export const recoverPassword = async (email) => {
       "email":email 
     });
     return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const sendLoginNotificationEmail = async (email, nombre) => {
+  try {
+    await axios.post(`${API_URL_CORREO}/api/Email/send-email`, {
+      email: email,
+      nombre: nombre,
+      asunto: "Se ha detectado un nuevo inicio de sesión",
+      mensaje: "XD",
+    });
+    
   } catch (error) {
     throw error;
   }

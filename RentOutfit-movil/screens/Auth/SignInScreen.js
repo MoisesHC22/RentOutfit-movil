@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import Modal from 'react-native-modal';
@@ -14,27 +14,31 @@ export default function SignInScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    setIsLoading(true); // Show loading indicator and disable button
     try {
       await login(email, password);
       navigation.navigate('ShoppingCart');
     } catch (error) {
-      setModalVisible(true); // Mostrar el modal si hay un error
+      setModalVisible(true); // Show modal if there is an error
       setTimeout(() => {
-        setModalVisible(false); // Ocultar el modal después de 3 segundos
-      }, 1000);
+        setModalVisible(false); // Hide modal after 3 seconds
+      }, 3000);
+    } finally {
+      setIsLoading(false); // Re-enable button and hide loading indicator
     }
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
   };
 
   return (
     <GradientBackground>
       <View style={styles.container}>
         <StatusBar style="light" />
+        {/* Back Button */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/LogoSF.png')}
@@ -77,17 +81,19 @@ export default function SignInScreen({ navigation }) {
           <TouchableOpacity
             style={styles.loginButton}
             onPress={handleLogin}
+            disabled={isLoading} // Disable button when loading
           >
-            <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+            )}
           </TouchableOpacity>
-          {/* Enlace para recuperar contraseña */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Recover')}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate('Recover')}>
             <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
         </View>
-        {/* Modal personalizado */}
+        {/* Error Modal */}
         <Modal isVisible={isModalVisible} animationIn="slideInUp" animationOut="slideOutDown">
           <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Error</Text>
