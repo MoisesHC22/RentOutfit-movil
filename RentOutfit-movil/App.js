@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/AuthContext';
 import * as Notifications from 'expo-notifications';
-import { navigationRef } from './navigation/RootNavigation'; // Importa el navigationRef
+import { navigationRef } from './navigation/RootNavigation';
 import { obtenerUbicacion } from './Services/Location/locateService';
 import { View, Text, ActivityIndicator, Alert, Linking, AppState } from 'react-native';
 
@@ -27,19 +27,17 @@ const App = () => {
         try {
           const location = await obtenerUbicacion();
           setLocationGranted(true);
-          console.log(location, 'Ubicación obtenida al volver al primer plano');
         } catch (error) {
-          console.log('Permiso de ubicación no concedido al volver al primer plano');
           setLocationGranted(null);
         }
       }
       appState.current = nextAppState;
     };
 
-    AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
-      AppState.removeEventListener('change', handleAppStateChange);
+      subscription.remove(); // Uso del patrón correcto para limpiar el listener
     };
   }, []);
 
@@ -48,7 +46,6 @@ const App = () => {
       try {
         const location = await obtenerUbicacion();
         setLocationGranted(true);
-        console.log(location, 'Ubicación obtenida');
       } catch (error) {
         setLocationGranted(null);
         Alert.alert(
@@ -65,7 +62,6 @@ const App = () => {
     const requestPermissions = async () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status === 'granted') {
-        console.log('Permisos de notificación concedidos');
         await Notifications.cancelAllScheduledNotificationsAsync();
         await Notifications.scheduleNotificationAsync({
           content: {
@@ -86,12 +82,16 @@ const App = () => {
       requestPermissions();
     }
 
-    Notifications.addNotificationResponseReceivedListener(response => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const screen = response.notification.request.content.data.screen;
       if (screen) {
         navigationRef.current?.navigate(screen);
       }
     });
+
+    return () => {
+      subscription.remove(); // Limpiar el listener de notificaciones
+    };
   }, [locationGranted]);
 
   if (locationGranted === null) {

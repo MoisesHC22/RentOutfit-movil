@@ -9,13 +9,13 @@ import { jwtDecode } from "jwt-decode";
 export default function SideMenu({ closeMenu }) {
   const navigation = useNavigation();
   const { user, logout } = useContext(AuthContext);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [userData, setUserData] = useState({});
 
   useEffect(() => {
     if (user?.token) {
       try {
         const decodedToken = jwtDecode(user.token.token);
-        console.log('Token decodificado', decodedToken);
         setUserData(decodedToken);
       } catch (error) {
         console.error('Error al decodificar el token:', error);
@@ -27,6 +27,7 @@ export default function SideMenu({ closeMenu }) {
     logout();
     closeMenu();
     navigation.navigate('Home');
+    setLogoutModalVisible(false);
   };
 
   return (
@@ -85,7 +86,7 @@ export default function SideMenu({ closeMenu }) {
       {user ? (
         <TouchableOpacity
           style={[styles.button, styles.logoutButton]}
-          onPress={handleLogout}
+          onPress={() => setLogoutModalVisible(true)} // Abre el modal personalizado
         >
           <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
           <Text style={styles.logoutText}>Cerrar Sesión</Text>
@@ -102,9 +103,41 @@ export default function SideMenu({ closeMenu }) {
           <Text style={styles.loginText}>Iniciar Sesión</Text>
         </TouchableOpacity>
       )}
+
+      {/* Modal personalizado para confirmar cierre de sesión */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={logoutModalVisible}
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Ionicons name="log-out-outline" size={40} color="#D9534F" />
+            <Text style={styles.modalTitle}>¿Cerrar sesión?</Text>
+            <Text style={styles.modalMessage}>¿Estás seguro de que deseas cerrar sesión?</Text>
+
+            <View style={styles.modalButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleLogout}
+              >
+                <Text style={styles.confirmButtonText}>Cerrar Sesión</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
+
 
 const styles = StyleSheet.create({
   menuContainer: {
@@ -203,5 +236,62 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#D9534F',
+    marginVertical: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+  },
+  confirmButton: {
+    backgroundColor: '#D9534F',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  confirmButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
