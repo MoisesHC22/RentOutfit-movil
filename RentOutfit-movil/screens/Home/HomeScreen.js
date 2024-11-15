@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {SafeAreaView,View,Text,TextInput,TouchableOpacity,StyleSheet,Dimensions,Modal,Pressable,Image,FlatList,TouchableWithoutFeedback,Keyboard,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import SideMenu from '../../components/Menu';
@@ -8,10 +8,10 @@ import { obtenerEstablecimientosCercanos } from '../../Services/listEstablecimie
 
 const { width } = Dimensions.get('window');
 
-const EstablecimientoCard = memo(({ item }) => (
-  <View style={styles.card}>
+const EstablecimientoCard = memo(({ item, onPress }) => (
+  <TouchableOpacity style={styles.card} onPress={() => onPress(item.establecimientosID)}>
     {item.linkImagenEstablecimiento ? (
-      <Image 
+      <Image
         source={{ uri: item.linkImagenEstablecimiento }}
         style={styles.cardImage}
         resizeMode="contain"
@@ -22,13 +22,12 @@ const EstablecimientoCard = memo(({ item }) => (
       </View>
     )}
     <View style={styles.cardContent}>
-      <Text style={styles.cardTitle}>{item.nombreEstablecimiento || 'Nombre no disponible'}</Text> 
+      <Text style={styles.cardTitle}>{item.nombreEstablecimiento || 'Nombre no disponible'}</Text>
       <Text style={styles.cardDetail}>Calle: {item.calle || 'No disponible'}</Text>
       <Text style={styles.cardDetail}>Estado: {item.nombreEstado || 'No disponible'}</Text>
       <Text style={styles.cardDetail}>Municipio: {item.nombreMunicipio || 'No disponible'}</Text>
-      <Text style={styles.cardDetail}>Código Postal: {item.codigoPostal || 'No disponible'}</Text>
     </View>
-  </View>
+  </TouchableOpacity>
 ));
 
 export default function HomeScreen() {
@@ -46,7 +45,7 @@ export default function HomeScreen() {
   const handleOutsidePress = () => {
     if (menuVisible) {
       setMenuVisible(false);
-      Keyboard.dismiss(); // Oculta el teclado en caso de estar visible
+      Keyboard.dismiss();
     }
   };
 
@@ -68,10 +67,11 @@ export default function HomeScreen() {
       const pagina = 0;
       const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
 
+      console.log('API Response:', response); // Debug
       setEstablecimientos(response);
       setLoading(false);
     } catch (error) {
-      console.error('Error al obtener los establecimientos', error);
+      console.error('Error al obtener los establecimientos:', error);
       setLoading(false);
     }
   };
@@ -84,57 +84,58 @@ export default function HomeScreen() {
     setUbicacionModalVisible(false);
   };
 
-  const renderFixedHeader = () => (
-    <View style={styles.fixedHeader}>
-      <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-        <Ionicons name="menu" size={32} color="black" />
-      </TouchableOpacity>
-      <TextInput style={styles.searchBox} placeholder="Buscar vestimenta" />
-      <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
-        <Ionicons name="location" size={32} color="black" />
-      </TouchableOpacity>
-    </View>
-  );
+  const goToDetails = (id) => {
+    console.log('ID enviado:', id); // Debugging
+    navigation.navigate('DetallesLocal', { id });
+  };
 
-  const renderCategories = () => (
-    <View style={styles.categoryContainer}>
-      {[
-        { name: 'Prendas', icon: 'shirt-outline', screen: 'VestimentasScreen' },
-        { name: 'Calzado', icon: 'footsteps-outline' },
-        { name: 'Hombre', icon: 'man-outline' },
-        { name: 'Mujer', icon: 'woman-outline' }
-      ].map((category, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.categoryButton}
-          onPress={() => category.screen && navigation.navigate(category.screen)}
-        >
-          <Ionicons name={category.icon} size={32} color="white" />
-          <Text style={styles.categoryText}>{category.name}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
 
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <SafeAreaView style={styles.safeArea}>
         {menuVisible && <SideMenu closeMenu={toggleMenu} />}
 
-        {renderFixedHeader()}
+        <View style={styles.fixedHeader}>
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Ionicons name="menu" size={32} color="black" />
+          </TouchableOpacity>
+          <TextInput style={styles.searchBox} placeholder="Buscar establecimientos" />
+          <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
+            <Ionicons name="location" size={32} color="black" />
+          </TouchableOpacity>
+        </View>
 
+        {/* Botones principales */}
+        <View style={styles.categoryContainer}>
+          {[
+            { name: 'Prendas', icon: 'shirt-outline', screen: 'VestimentasScreen' },
+            { name: 'Calzado', icon: 'footsteps-outline' },
+            { name: 'Hombre', icon: 'man-outline' },
+            { name: 'Mujer', icon: 'woman-outline' },
+          ].map((category, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.categoryButton}
+              onPress={() => category.screen && navigation.navigate(category.screen)}
+            >
+              <Ionicons name={category.icon} size={32} color="white" />
+              <Text style={styles.categoryText}>{category.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Lista de establecimientos */}
         <FlatList
           data={establecimientos}
           keyExtractor={(item, index) => index.toString()}
-          ListHeaderComponent={renderCategories}
-          renderItem={({ item }) => <EstablecimientoCard item={item} />}
-          ListEmptyComponent={() => (
+          renderItem={({ item }) => <EstablecimientoCard item={item} onPress={goToDetails} />}
+          ListEmptyComponent={() =>
             loading ? (
               <Text style={styles.loadingText}>Cargando establecimientos...</Text>
             ) : (
               <Text style={styles.noDataText}>No se encontraron establecimientos cercanos.</Text>
             )
-          )}
+          }
           contentContainerStyle={styles.listContentCentered}
         />
 
