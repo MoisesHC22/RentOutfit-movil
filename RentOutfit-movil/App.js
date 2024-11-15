@@ -6,7 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import * as Notifications from 'expo-notifications';
 import { navigationRef } from './navigation/RootNavigation'; // Importa el navigationRef
 import { obtenerUbicacion } from './Services/Location/locateService';
-import { View, Text, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, Linking, AppState } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,14 +18,38 @@ Notifications.setNotificationHandler({
 
 const App = () => {
   const [locationGranted, setLocationGranted] = useState(null);
+  const appState = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('App has come to the foreground');
+        try {
+          const location = await obtenerUbicacion();
+          setLocationGranted(true);
+          console.log(location, 'Ubicación obtenida al volver al primer plano');
+        } catch (error) {
+          console.log('Permiso de ubicación no concedido al volver al primer plano');
+          setLocationGranted(null);
+        }
+      }
+      appState.current = nextAppState;
+    };
+
+    AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      AppState.removeEventListener('change', handleAppStateChange);
+    };
+  }, []);
 
   useEffect(() => {
     const requestLocation = async () => {
       try {
         const location = await obtenerUbicacion();
         setLocationGranted(true);
+        console.log(location, 'Ubicación obtenida');
       } catch (error) {
-        // Permiso denegado o error en la obtención de la ubicación
         setLocationGranted(null);
         Alert.alert(
           'Permiso de Ubicación Requerido',
@@ -49,12 +73,11 @@ const App = () => {
             body: "¡Tenemos nuevos trajes que podrían interesarte!",
             data: { screen: 'VestimentasScreen' }, // Pantalla a la que queremos redirigir
           },
-          trigger: { seconds: 30, repeats: true },
+          trigger: { seconds: 1800, repeats: true },
         });
       }
     };
 
-    // Llama a requestLocation hasta que se otorgue el permiso.
     if (locationGranted === null) {
       requestLocation();
     }
