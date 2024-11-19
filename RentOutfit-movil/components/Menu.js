@@ -1,14 +1,27 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContext } from '../context/AuthContext';
+import { jwtDecode } from "jwt-decode";
 
 export default function SideMenu({ closeMenu }) {
   const navigation = useNavigation();
   const { user, logout } = useContext(AuthContext);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [userData, setUserData] = useState({});
+
+  useEffect(() => {
+    if (user?.token) {
+      try {
+        const decodedToken = jwtDecode(user.token.token);
+        setUserData(decodedToken);
+      } catch (error) {
+        console.error('Error al decodificar el token:', error);
+      }
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -26,26 +39,45 @@ export default function SideMenu({ closeMenu }) {
     >
       <TouchableOpacity style={styles.closeButton} onPress={closeMenu}>
         <Ionicons name="close" size={32} color="#000000" />
-        <Text style={styles.closeText}>Cerrar</Text>
       </TouchableOpacity>
 
       <View style={styles.menuContent}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => {
-          closeMenu();
-          navigation.navigate('Home');
-        }}>
+        <View style={styles.profileContainer}>
+          <Image
+            source={{
+              uri: user
+                ? userData.imagen
+                : 'https://cdn-icons-png.flaticon.com/512/149/149071.png', // Imagen de incógnito
+            }}
+            style={styles.profileImage}
+          />
+          <Text style={styles.profileName}>
+            {user ? userData.nombre : 'Inicia sesión para una mejor experiencia'}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            closeMenu();
+            navigation.navigate('Home');
+          }}
+        >
           <Ionicons name="home" size={24} color="#000000" />
           <Text style={styles.menuText}>Inicio</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => {
-          closeMenu();
-          if (user) {
-            navigation.navigate('MainStack', { screen: 'ShoppingCart' });
-          } else {
-            navigation.navigate('AuthStack', { screen: 'Login' });
-          }
-        }}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            closeMenu();
+            if (user) {
+              navigation.navigate('MainStack', { screen: 'ShoppingCart' });
+            } else {
+              navigation.navigate('AuthStack', { screen: 'Login' });
+            }
+          }}
+        >
           <Ionicons name="cart" size={24} color="#000000" />
           <Text style={styles.menuText}>Carrito</Text>
         </TouchableOpacity>
@@ -106,6 +138,7 @@ export default function SideMenu({ closeMenu }) {
   );
 }
 
+
 const styles = StyleSheet.create({
   menuContainer: {
     position: 'absolute',
@@ -127,7 +160,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
   closeText: {
@@ -139,6 +171,24 @@ const styles = StyleSheet.create({
   menuContent: {
     flex: 1,
     justifyContent: 'flex-start',
+  },
+  profileContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  profileName: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
   },
   menuItem: {
     flexDirection: 'row',

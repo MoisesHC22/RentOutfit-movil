@@ -9,7 +9,7 @@ import { obtenerVestimentas } from '../Services/listVestimenta';
 const { width } = Dimensions.get('window');
 
 const VestimentaCard = memo(({ item, onPress }) => (
-  <View style={styles.card}>
+  <TouchableOpacity style={styles.card} onPress={() => onPress(item.vestimentaID)}>
     {item.imagen1 ? (
       <Image 
         source={{ uri: item.imagen1 }}
@@ -24,11 +24,8 @@ const VestimentaCard = memo(({ item, onPress }) => (
     <View style={styles.cardContent}>
       <Text style={styles.cardTitle}>{item.nombrePrenda}</Text>
       <Text style={styles.cardDetail}>Establecimiento: {item.nombreEstablecimiento}</Text>
-      <TouchableOpacity style={styles.detailsButton} onPress={() => onPress(item.vestimentaID)}>
-        <Text style={styles.detailsButtonText}>Ver prenda</Text>
-      </TouchableOpacity>
     </View>
-  </View>
+  </TouchableOpacity>
 ));
 
 export default function VestimentasScreen() {
@@ -148,18 +145,6 @@ export default function VestimentasScreen() {
 }
 
 const styles = StyleSheet.create({
-  detailsButton: {
-    backgroundColor: '#0180CB',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  detailsButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
