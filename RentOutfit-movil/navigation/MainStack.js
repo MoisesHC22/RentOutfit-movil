@@ -5,6 +5,7 @@ import ShoppingCartScreen from '../screens/Cart/shoppingCart';
 import VestimentasScreen from '../screens/VestimentasScreen';
 import DetallesPrenda from '../screens/DetallesPrenda'; // Importa DetallesPrenda
 import { AuthContext } from '../context/AuthContext';
+import DetallesLocal from '../screens/DetallesLocal';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,9 @@ const MainStack = () => {
 
       {/* Nueva pantalla de detalles de la prenda */}
       <Stack.Screen name="DetallesPrenda" component={DetallesPrenda} />
+
+      {/* Nueva pantalla de detalles del local */}
+      <Stack.Screen name="DetallesLocal" component={DetallesLocal} />
     </Stack.Navigator>
   );
 };

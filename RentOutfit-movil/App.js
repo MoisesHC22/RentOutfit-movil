@@ -4,9 +4,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/AuthContext';
 import * as Notifications from 'expo-notifications';
-import { navigationRef } from './navigation/RootNavigation'; // Importa el navigationRef
+import { navigationRef } from './navigation/RootNavigation';
 import { obtenerUbicacion } from './Services/Location/locateService';
-import { View, Text, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, Linking, AppState } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,6 +18,28 @@ Notifications.setNotificationHandler({
 
 const App = () => {
   const [locationGranted, setLocationGranted] = useState(null);
+  const appState = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('App has come to the foreground');
+        try {
+          const location = await obtenerUbicacion();
+          setLocationGranted(true);
+        } catch (error) {
+          setLocationGranted(null);
+        }
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove(); // Uso del patrón correcto para limpiar el listener
+    };
+  }, []);
 
   useEffect(() => {
     const requestLocation = async () => {
@@ -25,7 +47,6 @@ const App = () => {
         const location = await obtenerUbicacion();
         setLocationGranted(true);
       } catch (error) {
-        // Permiso denegado o error en la obtención de la ubicación
         setLocationGranted(null);
         Alert.alert(
           'Permiso de Ubicación Requerido',
@@ -41,7 +62,6 @@ const App = () => {
     const requestPermissions = async () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status === 'granted') {
-        console.log('Permisos de notificación concedidos');
         await Notifications.cancelAllScheduledNotificationsAsync();
         await Notifications.scheduleNotificationAsync({
           content: {
@@ -49,12 +69,11 @@ const App = () => {
             body: "¡Tenemos nuevos trajes que podrían interesarte!",
             data: { screen: 'VestimentasScreen' }, // Pantalla a la que queremos redirigir
           },
-          trigger: { seconds: 30, repeats: true },
+          trigger: { seconds: 1800, repeats: true },
         });
       }
     };
 
-    // Llama a requestLocation hasta que se otorgue el permiso.
     if (locationGranted === null) {
       requestLocation();
     }
@@ -63,12 +82,16 @@ const App = () => {
       requestPermissions();
     }
 
-    Notifications.addNotificationResponseReceivedListener(response => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const screen = response.notification.request.content.data.screen;
       if (screen) {
         navigationRef.current?.navigate(screen);
       }
     });
+
+    return () => {
+      subscription.remove(); // Limpiar el listener de notificaciones
+    };
   }, [locationGranted]);
 
   if (locationGranted === null) {
