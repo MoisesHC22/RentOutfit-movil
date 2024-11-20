@@ -3,11 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Image, Dime
 import Checkbox from 'expo-checkbox';
 import RNPickerSelect from 'react-native-picker-select';
 import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import styles from '../../assets/styles/SignUpStyle';
 import { listGeneros } from '../../Services/listServices';
+import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { handleSignup } from '../../Services/loginService';
 
@@ -41,12 +41,12 @@ export default function SignupScreen({ navigation }) {
   const seleccionarImagen = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usando MediaTypeOptions como fallback
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
       });
-
+  
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const uri = result.assets[0].uri;
         const manipResult = await ImageManipulator.manipulateAsync(
@@ -56,16 +56,19 @@ export default function SignupScreen({ navigation }) {
         );
         setImagen(manipResult.uri);
       } else {
-        setModalMessage('Verifica la conexión a internet.');
-        setModalType('Error de conexión');
+        setModalMessage('No se seleccionó ninguna imagen.');
+        setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
-      setModalMessage('Verifica la conexión a internet.');
-      setModalType('Error de conexión');
+      console.error('Error seleccionando imagen:', error);
+      setModalMessage('Error al seleccionar la imagen.');
+      setModalType('error');
       setModalVisible(true);
     }
   };
+  
+  
 
   const onSignup = async () => {
     setIsLoading(true);
