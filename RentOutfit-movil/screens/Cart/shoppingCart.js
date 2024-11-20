@@ -1,201 +1,139 @@
-import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { AuthContext } from '../../context/AuthContext'; 
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert, Dimensions, SafeAreaView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { listCart } from '../../Services/listServices';
+import { AuthContext } from '../../context/AuthContext';
+import { jwtDecode } from "jwt-decode";
+import { obtenerInformacionPrenda } from '../../Services/InformacionPrenda';
+import styles from '../../assets/styles/CartStyle'
 
-const ShoppingCartScreen = ({ navigation }) => {
-  const { user, logout } = useContext(AuthContext);
 
-  // Ejemplo de productos en el carrito
-  const productosEnCarrito = [
-    { id: '1', nombre: 'Camisa Casual', precio: 30.00, imagen: 'https://via.placeholder.com/100' },
-    { id: '2', nombre: 'Zapatos Deportivos', precio: 45.00, imagen: 'https://via.placeholder.com/100' },
-    { id: '3', nombre: 'Pantalones Jeans', precio: 25.00, imagen: 'https://via.placeholder.com/100' },
-  ];
+export default function CarritoScreen({ navigation }) {
+  const { user } = useContext(AuthContext);
+  const [userData, setUserData] = useState({});
+  const [carrito, setCarrito] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Calcular el total del carrito
-  const total = productosEnCarrito.reduce((sum, item) => sum + item.precio, 0).toFixed(2);
+  useEffect(() => {
+    const fetchCarrito = async () => {
+      if (!user) {
+        Alert.alert(
+          'Inicia sesión',
+          'Debes iniciar sesión para ver tu carrito.',
+          [
+            {
+              text: 'Ir a Login',
+              onPress: () => navigation.navigate('AuthStack', { screen: 'Login' }),
+            },
+            {
+              text: 'Cancelar',
+              style: 'cancel',
+            },
+          ]
+        );
+        return;
+      }
+  
+      try {
+        // Decodifica el token
+        const decodedToken = jwtDecode(user.token.token);
+        const usuarioID = parseInt(decodedToken.usuario, 10); // Convierte `usuario` a número
+        setUserData(decodedToken);
+  
+        console.log("Decoded usuarioID:", usuarioID); // Confirma que el usuarioID no es `undefined`
+  
+        // Ahora llama al carrito con el usuarioID
+        const data = await listCart(usuarioID);
+        const detailedInfo = await Promise.all(
+          data.map(async (item) => {
+            const prendaData = await obtenerInformacionPrenda(item.vestimentaID);
+            return { ...item, ...prendaData };
+          })
+        );
+        setCarrito(detailedInfo);
+      } catch (error) {
+        console.error('Error al obtener el carrito:', error);
+        Alert.alert('Error', 'No se pudo cargar el carrito.');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchCarrito();
+  }, [user]);
+  
 
-  if (!user) {
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <Image source={{ uri: item.imagen1 }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName} numberOfLines={1}>{item.nombrePrenda}</Text>
+        <Text style={styles.itemText}>Cantidad: {item.stock}</Text>
+        <Text style={styles.itemText} numberOfLines={1}>
+          Préstamo: {new Date(item.fechaPrestamo).toLocaleDateString()}
+        </Text>
+        <Text style={styles.itemPrice}>${item.precioPorDia}/día</Text>
+        <Text style={styles.itemText}>Talla: {item.nombreTalla}</Text>
+        <Text style={styles.itemText}>Estilo: {item.nombreEstilo}</Text>
+      </View>
+    </View>
+  );
+  
+
+  const handleCheckout = () => {
+    Alert.alert(
+      'Confirmar Compra',
+      '¿Estás seguro de que deseas proceder con el checkout?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sí',
+          onPress: () => Alert.alert('Éxito', 'Proceso de checkout iniciado.'),
+        },
+      ]
+    );
+  };
+
+  if (loading) {
     return (
-      <SafeAreaView style={styles.safeContainer}>
-        <Text style={styles.title}>Accede para ver tu carrito</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SignIn')} style={styles.loginButton}>
-          <Text style={styles.loginText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
     );
   }
 
-  const userEmail = user.email || 'Usuario';
-
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>¡Hola, {userEmail}!</Text>
-        <Text style={styles.subtitle}>Estos son los productos en tu carrito:</Text>
-
-        <FlatList
-          data={productosEnCarrito}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={{ uri: item.imagen }} style={styles.productImage} />
-              <View style={styles.productDetails}>
-                <Text style={styles.productName}>{item.nombre}</Text>
-                <Text style={styles.productPrice}>${item.precio.toFixed(2)}</Text>
-              </View>
-              <TouchableOpacity style={styles.removeButton}>
-                <Text style={styles.removeButtonText}>Eliminar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-
-        {/* Total de la compra */}
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>Total de tu compra:</Text>
-          <Text style={styles.totalAmount}>${total}</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mi Carrito</Text>
         </View>
-
-        {/* Botón para regresar al menú */}
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Text style={styles.buttonText}>Seguir comprando</Text>
-        </TouchableOpacity>
-
-        {/* Botón para cerrar sesión */}
+        {carrito.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Tu carrito está vacío.</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={carrito}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+          />
+        )}
+        {carrito.length > 0 && (
+          <View style={styles.checkoutContainer}>
+            <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+              <Text style={styles.checkoutButtonText}>Proceder al Checkout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#777',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  loginText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  productDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  productPrice: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 5,
-  },
-  removeButton: {
-    backgroundColor: '#ff5252',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    marginTop: 20,
-  },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  totalAmount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  logoutButton: {
-    backgroundColor: '#f44336',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-});
-
-export default ShoppingCartScreen;
+}

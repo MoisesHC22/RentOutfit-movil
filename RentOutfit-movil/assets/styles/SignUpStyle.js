@@ -62,11 +62,18 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 8,
-    marginBottom: 15,
-    paddingLeft: 10,
+    borderWidth: 2,
+    borderColor: '#0c4a6e',
+    padding: 1,
+    marginTop: width * 0.05, // Espacio superior
+    marginBottom: width * 0.05, // Espacio inferior
   },
+  pickerText: {
+    fontSize: 16,
+    color: '#0c4a6e',
+  },  
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

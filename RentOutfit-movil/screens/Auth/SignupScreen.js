@@ -29,7 +29,7 @@ export default function SignupScreen({ navigation }) {
   const [selectedGenero, setSelectedGenero] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  
+
 
   // Estado para controlar el modal y su tipo (éxito o error)
   const [modalVisible, setModalVisible] = useState(false);
@@ -46,7 +46,7 @@ export default function SignupScreen({ navigation }) {
         aspect: [4, 3],
         quality: 1,
       });
-  
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const uri = result.assets[0].uri;
         const manipResult = await ImageManipulator.manipulateAsync(
@@ -67,8 +67,8 @@ export default function SignupScreen({ navigation }) {
       setModalVisible(true);
     }
   };
-  
-  
+
+
 
   const onSignup = async () => {
     setIsLoading(true);
@@ -80,6 +80,14 @@ export default function SignupScreen({ navigation }) {
         setModalVisible(true);
         return;
       }
+
+      if (!selectedGenero) {
+        setModalMessage('Por favor selecciona un género.');
+        setModalType('error');
+        setModalVisible(true);
+        return;
+      }
+      
 
       // Datos del usuario a enviar
       const userData = {
@@ -167,7 +175,7 @@ export default function SignupScreen({ navigation }) {
       >
         <StatusBar style="light" />
         <View style={styles.header}>
-        <TouchableOpacity style={styles.backArrowContainer} onPress={handleBackPress}>
+          <TouchableOpacity style={styles.backArrowContainer} onPress={handleBackPress}>
             <Ionicons name="arrow-back" size={28} color="#fff" />
           </TouchableOpacity>
           <View style={styles.progressContainer}>
@@ -241,15 +249,25 @@ export default function SignupScreen({ navigation }) {
             </View>
 
             <RNPickerSelect
-              onValueChange={(itemValue) => setSelectedGenero(itemValue)}
+              onValueChange={(itemValue) => {
+                if (itemValue !== null) {
+                  setSelectedGenero(itemValue);
+                }
+              }}
               items={generos.map((genero) => ({
                 label: genero.nombreGenero,
                 value: genero.generoID,
               }))}
               placeholder={{ label: 'Selecciona tu género', value: null }}
-              style={pickerSelectStyles}
+              style={{
+                inputIOS: styles.pickerText,
+                inputAndroid: styles.pickerText,
+                viewContainer: styles.pickerContainer, // Aplica el contenedor personalizado
+              }}
               value={selectedGenero}
             />
+
+
 
             <View style={styles.inputContainer}>
               <Ionicons name="call-outline" size={24} color="#0c4a6e" style={styles.inputIcon} />
