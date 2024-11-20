@@ -69,7 +69,7 @@ const App = () => {
             body: "¡Tenemos nuevos trajes que podrían interesarte!",
             data: { screen: 'VestimentasScreen' }, // Pantalla a la que queremos redirigir
           },
-          trigger: { seconds: 1800, repeats: true },
+          trigger: { seconds: 180000, repeats: true },
         });
       }
     };
