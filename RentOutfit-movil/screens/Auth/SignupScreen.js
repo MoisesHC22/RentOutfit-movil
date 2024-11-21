@@ -3,11 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Image, Dime
 import Checkbox from 'expo-checkbox';
 import RNPickerSelect from 'react-native-picker-select';
 import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import styles from '../../assets/styles/SignUpStyle';
 import { listGeneros } from '../../Services/listServices';
+import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { handleSignup } from '../../Services/loginService';
 
@@ -29,7 +29,7 @@ export default function SignupScreen({ navigation }) {
   const [selectedGenero, setSelectedGenero] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  
+
 
   // Estado para controlar el modal y su tipo (éxito o error)
   const [modalVisible, setModalVisible] = useState(false);
@@ -41,7 +41,7 @@ export default function SignupScreen({ navigation }) {
   const seleccionarImagen = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usando MediaTypeOptions como fallback
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
@@ -56,16 +56,19 @@ export default function SignupScreen({ navigation }) {
         );
         setImagen(manipResult.uri);
       } else {
-        setModalMessage('Verifica la conexión a internet.');
-        setModalType('Error de conexión');
+        setModalMessage('No se seleccionó ninguna imagen.');
+        setModalType('error');
         setModalVisible(true);
       }
     } catch (error) {
-      setModalMessage('Verifica la conexión a internet.');
-      setModalType('Error de conexión');
+      console.error('Error seleccionando imagen:', error);
+      setModalMessage('Error al seleccionar la imagen.');
+      setModalType('error');
       setModalVisible(true);
     }
   };
+
+
 
   const onSignup = async () => {
     setIsLoading(true);
@@ -77,6 +80,14 @@ export default function SignupScreen({ navigation }) {
         setModalVisible(true);
         return;
       }
+
+      if (!selectedGenero) {
+        setModalMessage('Por favor selecciona un género.');
+        setModalType('error');
+        setModalVisible(true);
+        return;
+      }
+      
 
       // Datos del usuario a enviar
       const userData = {
@@ -164,7 +175,7 @@ export default function SignupScreen({ navigation }) {
       >
         <StatusBar style="light" />
         <View style={styles.header}>
-        <TouchableOpacity style={styles.backArrowContainer} onPress={handleBackPress}>
+          <TouchableOpacity style={styles.backArrowContainer} onPress={handleBackPress}>
             <Ionicons name="arrow-back" size={28} color="#fff" />
           </TouchableOpacity>
           <View style={styles.progressContainer}>
@@ -238,15 +249,25 @@ export default function SignupScreen({ navigation }) {
             </View>
 
             <RNPickerSelect
-              onValueChange={(itemValue) => setSelectedGenero(itemValue)}
+              onValueChange={(itemValue) => {
+                if (itemValue !== null) {
+                  setSelectedGenero(itemValue);
+                }
+              }}
               items={generos.map((genero) => ({
                 label: genero.nombreGenero,
                 value: genero.generoID,
               }))}
               placeholder={{ label: 'Selecciona tu género', value: null }}
-              style={pickerSelectStyles}
+              style={{
+                inputIOS: styles.pickerText,
+                inputAndroid: styles.pickerText,
+                viewContainer: styles.pickerContainer, // Aplica el contenedor personalizado
+              }}
               value={selectedGenero}
             />
+
+
 
             <View style={styles.inputContainer}>
               <Ionicons name="call-outline" size={24} color="#0c4a6e" style={styles.inputIcon} />

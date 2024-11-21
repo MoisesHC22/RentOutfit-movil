@@ -1,201 +1,299 @@
-import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { AuthContext } from '../../context/AuthContext'; 
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { listCart, updateCartItem, removeCartItem } from '../../Services/listServices';
+import { AuthContext } from '../../context/AuthContext';
+import { jwtDecode } from "jwt-decode";
+import { obtenerInformacionPrenda } from '../../Services/InformacionPrenda';
+import styles from '../../assets/styles/CartStyle';
 
-const ShoppingCartScreen = ({ navigation }) => {
-  const { user, logout } = useContext(AuthContext);
+export default function CarritoScreen({ navigation }) {
+  const { user } = useContext(AuthContext);
+  const [userData, setUserData] = useState({});
+  const [carrito, setCarrito] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalAmount, setTotalAmount] = useState(0);
 
-  // Ejemplo de productos en el carrito
-  const productosEnCarrito = [
-    { id: '1', nombre: 'Camisa Casual', precio: 30.00, imagen: 'https://via.placeholder.com/100' },
-    { id: '2', nombre: 'Zapatos Deportivos', precio: 45.00, imagen: 'https://via.placeholder.com/100' },
-    { id: '3', nombre: 'Pantalones Jeans', precio: 25.00, imagen: 'https://via.placeholder.com/100' },
-  ];
+  useEffect(() => {
+    const fetchCarrito = async () => {
+      if (!user) {
+        Alert.alert(
+          'Inicia sesión',
+          'Debes iniciar sesión para ver tu carrito.',
+          [
+            {
+              text: 'Ir a Login',
+              onPress: () => navigation.navigate('AuthStack', { screen: 'Login' }),
+            },
+            {
+              text: 'Cancelar',
+              style: 'cancel',
+            },
+          ]
+        );
+        return;
+      }
 
-  // Calcular el total del carrito
-  const total = productosEnCarrito.reduce((sum, item) => sum + item.precio, 0).toFixed(2);
+      try {
+        const decodedToken = jwtDecode(user.token.token);
+        const usuarioID = parseInt(decodedToken.usuario, 10);
+        setUserData(decodedToken);
 
-  if (!user) {
+        const data = await listCart(usuarioID);
+
+        const detailedInfo = await Promise.all(
+          data.map(async (item) => {
+            const prendaData = await obtenerInformacionPrenda(item.vestimentaID);
+            return {
+              stockTotal: prendaData.stock,
+              imagen1: prendaData.imagen1,
+              precioPorDia: prendaData.precioPorDia,
+              vestimentaEstatus: prendaData.vestimentaEstatus,
+              nombreEstilo: prendaData.nombreEstilo,
+              nombrePrenda: prendaData.nombrePrenda,
+              nombreTalla: prendaData.nombreTalla,
+              ...item, // Combina las propiedades originales de `data` (como `fechaPrestamo` y `vestimentaID`).
+            };
+          })
+        );
+
+        console.log('detailedInfo:', detailedInfo); // Verifica el resultado procesado
+        setCarrito(detailedInfo);
+        calculateTotal(detailedInfo);
+      } catch (error) {
+        console.error('Error al obtener el carrito:', error);
+        Alert.alert('Error', 'No se pudo cargar el carrito.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCarrito();
+  }, [user]);
+
+  const calculateTotal = (items) => {
+    const total = items.reduce((sum, item) => sum + (item.precioPorDia * item.stock), 0);
+    setTotalAmount(total);
+  };
+
+  const handleIncrease = async (item) => {
+    try {
+      if (item.stock >= item.stockTotal) {
+        // Si el stock actual ya es igual o mayor que el stockTotal, mostrar un mensaje de error
+        Alert.alert('Límite alcanzado', 'No puedes agregar más de esta prenda.');
+        return;
+      }
+  
+      // Actualizar el stock del ítem
+      const updatedItem = { ...item, stock: item.stock + 1 };
+      await updateCartItem(userData.usuario, updatedItem);
+  
+      // Actualizar el estado del carrito
+      const updatedCarrito = carrito.map((cartItem) =>
+        cartItem.vestimentaID === item.vestimentaID ? updatedItem : cartItem
+      );
+      setCarrito(updatedCarrito);
+  
+      // Recalcular el total
+      calculateTotal(updatedCarrito);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo aumentar la cantidad.');
+    }
+  };
+  
+  const handleDecrease = async (item) => {
+    if (item.stock === 1) {
+      // Mostrar confirmación de eliminación
+      Alert.alert(
+        'Eliminar prenda',
+        'La cantidad llegará a 0. ¿Deseas eliminar esta prenda del carrito?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Eliminar',
+            onPress: async () => {
+              try {
+                // Eliminar la prenda
+                await deleteCartItem(userData.usuario, item.vestimentaID); // Asume que tienes una función para eliminar el ítem
+                const updatedCarrito = carrito.filter(
+                  (cartItem) => cartItem.vestimentaID !== item.vestimentaID
+                );
+                setCarrito(updatedCarrito);
+                calculateTotal(updatedCarrito);
+              } catch (error) {
+                Alert.alert('Error', 'No se pudo eliminar la prenda del carrito.');
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+  
+    try {
+      // Reducir el stock del ítem
+      const updatedItem = { ...item, stock: item.stock - 1 };
+      await updateCartItem(userData.usuario, updatedItem);
+  
+      // Actualizar el estado del carrito
+      const updatedCarrito = carrito.map((cartItem) =>
+        cartItem.vestimentaID === item.vestimentaID ? updatedItem : cartItem
+      );
+      setCarrito(updatedCarrito);
+  
+      // Recalcular el total
+      calculateTotal(updatedCarrito);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo disminuir la cantidad.');
+    }
+  };
+  
+
+  const handleRemove = async (item) => {
+    console.log('item:', item);
+    Alert.alert(
+      'Eliminar artículo',
+      '¿Estás seguro de que quieres eliminar este artículo del carrito?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const itemCarrito = {
+                usuarioID: item.usuario, // Asegúrate de que `user` contenga el ID del usuario
+                itemsCarrito: [
+                  {
+                    vestimentaID: item.vestimentaID,
+                    stock: cantidad,
+                    fechaPrestamo: new Date().toISOString(),
+                  },
+                ],
+              };
+              await removeCartItem(userData.usuario, item.vestimentaID);
+              const updatedCarrito = carrito.filter((cartItem) => cartItem.vestimentaID !== item.vestimentaID);
+              setCarrito(updatedCarrito);
+              calculateTotal(updatedCarrito);
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo eliminar el artículo.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <Image source={{ uri: item.imagen1 }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName} numberOfLines={1}>{item.nombrePrenda}</Text>
+        <Text style={styles.itemText}>Cantidad: {item.stock}</Text>
+        <Text style={styles.itemText} numberOfLines={1}>
+          Préstamo: {new Date(item.fechaPrestamo).toLocaleDateString()}
+        </Text>
+        <Text style={styles.itemPrice}>${item.precioPorDia}/día</Text>
+        <Text style={styles.itemText}>Talla: {item.nombreTalla}</Text>
+        <Text style={styles.itemText}>Estilo: {item.nombreEstilo}</Text>
+
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleDecrease(item)}
+          >
+            <Ionicons name="remove-circle-outline" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <Text style={styles.quantityText}>{item.stock}</Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleIncrease(item)}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleRemove(item)}
+          >
+            <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  const handleCheckout = () => {
+    Alert.alert(
+      'Confirmar Compra',
+      `¿Estás seguro de que deseas proceder con el checkout? El total es $${totalAmount.toFixed(2)}.`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sí',
+          onPress: () => navigation.navigate('Checkout', { carrito, totalAmount }),
+        },
+      ]
+    );
+  };
+
+  if (loading) {
     return (
-      <SafeAreaView style={styles.safeContainer}>
-        <Text style={styles.title}>Accede para ver tu carrito</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SignIn')} style={styles.loginButton}>
-          <Text style={styles.loginText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
     );
   }
 
-  const userEmail = user.email || 'Usuario';
-
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>¡Hola, {userEmail}!</Text>
-        <Text style={styles.subtitle}>Estos son los productos en tu carrito:</Text>
-
-        <FlatList
-          data={productosEnCarrito}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={{ uri: item.imagen }} style={styles.productImage} />
-              <View style={styles.productDetails}>
-                <Text style={styles.productName}>{item.nombre}</Text>
-                <Text style={styles.productPrice}>${item.precio.toFixed(2)}</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mi Carrito</Text>
+        </View>
+        {carrito.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="cart-outline" size={64} color="#888" />
+            <Text style={styles.emptyText}>Tu carrito está vacío.</Text>
+            <TouchableOpacity
+              style={styles.continueShoppingButton}
+              onPress={() => navigation.navigate('Home')}
+            >
+              <Text style={styles.continueShoppingText}>Continuar Comprando</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <FlatList
+              data={carrito}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={styles.listContainer}
+            />
+            <View style={styles.checkoutContainer}>
+              <View style={styles.totalContainer}>
+                <Text style={styles.totalText}>Total:</Text>
+                <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
               </View>
-              <TouchableOpacity style={styles.removeButton}>
-                <Text style={styles.removeButtonText}>Eliminar</Text>
+              <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+                <Text style={styles.checkoutButtonText}>Proceder al Checkout</Text>
               </TouchableOpacity>
             </View>
-          )}
-        />
-
-        {/* Total de la compra */}
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>Total de tu compra:</Text>
-          <Text style={styles.totalAmount}>${total}</Text>
-        </View>
-
-        {/* Botón para regresar al menú */}
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Text style={styles.buttonText}>Seguir comprando</Text>
-        </TouchableOpacity>
-
-        {/* Botón para cerrar sesión */}
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#777',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  loginText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  productDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  productPrice: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 5,
-  },
-  removeButton: {
-    backgroundColor: '#ff5252',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    marginTop: 20,
-  },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  totalAmount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  logoutButton: {
-    backgroundColor: '#f44336',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-});
-
-export default ShoppingCartScreen;

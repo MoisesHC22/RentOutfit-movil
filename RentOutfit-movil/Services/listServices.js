@@ -42,4 +42,19 @@ export const listMunicipios = async (estadoId) => {
       throw error;
     }
   };
+
+  export const listCart = async (usuarioId) => {
+    try {
+      console.log(usuarioId);
+      const response = await axios.post(`${API_URL}/Cliente/CargarCarrito`, usuarioId, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener cart:', error);
+      throw error;
+    }
+  };
   
