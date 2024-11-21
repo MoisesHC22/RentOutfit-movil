@@ -1,17 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, Pressable, TextInput, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { obtenerInformacionPrenda } from '../Services/InformacionPrenda';
 import SideMenu from '../components/Menu';
+import { AuthContext } from '../context/AuthContext';
+import { jwtDecode } from "jwt-decode";
+import { agregarAlCarrito } from '../Services/AddCartService';
 import { obtenerUbicacion } from '../Services/Location/locateService';
 
 const { width } = Dimensions.get('window');
 
 export default function DetallesPrenda({ route, navigation }) {
   const { id } = route.params;
+  const { user, logout } = useContext(AuthContext);
+  const [userData, setUserData] = useState({});
   const [prenda, setPrenda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [cantidad, setCantidad] = useState(1); // Nueva funcionalidad para seleccionar cantidad de prendas
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
   const [codigoPostal, setCodigoPostal] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,7 +50,7 @@ export default function DetallesPrenda({ route, navigation }) {
   const handleOutsidePress = () => {
     if (menuVisible) {
       setMenuVisible(false);
-      Keyboard.dismiss(); 
+      Keyboard.dismiss();
     }
   };
 
@@ -61,6 +67,70 @@ export default function DetallesPrenda({ route, navigation }) {
 
   const closeModal = () => {
     setUbicacionModalVisible(false);
+  };
+
+  useEffect(() => {
+    if (user?.token) {
+      try {
+        const decodedToken = jwtDecode(user.token.token);
+        console.log('decodedToken:', decodedToken);
+        setUserData(decodedToken);
+      } catch (error) {
+        console.error('Error al decodificar el token:', error);
+      }
+    }
+  }, [user]);
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      Alert.alert(
+        'Inicia sesión',
+        'Debes iniciar sesión para agregar prendas al carrito.',
+        [
+          {
+            text: 'Ir a Login',
+            onPress: () => navigation.navigate('AuthStack', { screen: 'Login' }),
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+        ]
+      );
+      return;
+    }
+
+    try {
+      const itemCarrito = {
+        usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
+        itemsCarrito: [
+          {
+            vestimentaID: id,
+            stock: cantidad,
+            fechaPrestamo: new Date().toISOString(),
+          },
+        ],
+      };
+      console.log('itemCarrito:', itemCarrito);
+      await agregarAlCarrito(itemCarrito);
+      Alert.alert('Éxito', 'Prenda añadida al carrito correctamente.');
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo agregar la prenda al carrito.');
+    }
+  };
+
+  const incrementarCantidad = () => {
+    if (cantidad < prenda.stock) {
+      setCantidad(cantidad + 1);
+    } else {
+      Alert.alert('Stock insuficiente', 'No hay suficientes prendas disponibles.');
+    }
+  };
+
+  const decrementarCantidad = () => {
+    if (cantidad > 1) {
+      setCantidad(cantidad - 1);
+    }
   };
 
   const renderFixedHeader = () => (
@@ -92,11 +162,10 @@ export default function DetallesPrenda({ route, navigation }) {
       <View style={styles.safeArea}>
         {menuVisible && <SideMenu closeMenu={toggleMenu} />}
         {renderFixedHeader()}
-        
+
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>{prenda.nombrePrenda}</Text>
-          
-          {/* Galería de imágenes */}
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageCarousel}>
             {[prenda.imagen1, prenda.imagen2, prenda.imagen3, prenda.imagen4].map((image, index) => (
               image ? (
@@ -107,21 +176,10 @@ export default function DetallesPrenda({ route, navigation }) {
             ))}
           </ScrollView>
 
-          {/* Modal para mostrar imagen en pantalla completa */}
-          <Modal visible={modalVisible} transparent={true} animationType="fade">
-            <View style={styles.modalContainer}>
-              <Pressable style={styles.closeButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.closeButtonText}>X</Text>
-              </Pressable>
-              <Image source={{ uri: selectedImage }} style={styles.fullImage} />
-            </View>
-          </Modal>
-
           <Text style={styles.price}>${prenda.precioPorDia} <Text style={styles.priceDetails}>IVA incluido</Text></Text>
-          
+
           <Text style={styles.description}>{prenda.descripcion}</Text>
-          
-          {/* Calificación y otros detalles */}
+
           <View style={styles.detailsContainer}>
             <Text style={styles.detail}>Talla: {prenda.nombreTalla || 'No disponible'}</Text>
             <Text style={styles.detail}>Estilo: {prenda.nombreEstilo || 'No disponible'}</Text>
@@ -129,33 +187,20 @@ export default function DetallesPrenda({ route, navigation }) {
             <Text style={styles.detail}>Fecha de Publicación: {new Date(prenda.fechaDePublicacion).toLocaleDateString()}</Text>
           </View>
 
-          {/* Botones */}
-          <TouchableOpacity style={styles.button}>
+          <View style={styles.counterContainer}>
+            <TouchableOpacity style={styles.counterButton} onPress={decrementarCantidad}>
+              <Ionicons name="remove-circle-outline" size={32} color="#007AFF" />
+            </TouchableOpacity>
+            <Text style={styles.counterText}>{cantidad}</Text>
+            <TouchableOpacity style={styles.counterButton} onPress={incrementarCantidad}>
+              <Ionicons name="add-circle-outline" size={32} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
             <Text style={styles.buttonText}>Rentar prenda</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.buyButton]}>
-            <Text style={styles.buttonText}>Comprar prenda</Text>
-          </TouchableOpacity>
         </ScrollView>
-
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={ubicacionModalVisible}
-          onRequestClose={closeModal}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalView}>
-              <Ionicons name="location" size={64} color="#007AFF" style={styles.modalIcon} />
-              <Text style={styles.modalTitle}>¡Ubicación obtenida!</Text>
-              <Text style={styles.modalText}>Tu código postal es:</Text>
-              <Text style={styles.modalPostalCode}>{codigoPostal}</Text>
-              <Pressable style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Cerrar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -334,5 +379,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0180CB',
     marginBottom: 20,
+  },
+  counterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  counterButton: {
+    padding: 10,
+  },
+  counterText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
   },
 });
