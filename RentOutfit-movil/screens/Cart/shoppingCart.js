@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { listCart, updateCartItem, removeCartItem } from '../../Services/listServices';
 import { AuthContext } from '../../context/AuthContext';
 import { jwtDecode } from "jwt-decode";
+import { agregarAlCarrito } from '../../Services/AddCartService';
 import { obtenerInformacionPrenda } from '../../Services/InformacionPrenda';
 import styles from '../../assets/styles/CartStyle';
 
@@ -13,6 +14,32 @@ export default function CarritoScreen({ navigation }) {
   const [carrito, setCarrito] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalAmount, setTotalAmount] = useState(0);
+
+  const mapCarritoItems = async (data) => {
+    return Promise.all(
+      data.map(async (item) => {
+        const prendaData = await obtenerInformacionPrenda(item.vestimentaID);
+        return {
+          stockTotal: prendaData.stock,
+          imagen1: prendaData.imagen1,
+          precioPorDia: prendaData.precioPorDia,
+          vestimentaEstatus: prendaData.vestimentaEstatus,
+          nombreEstilo: prendaData.nombreEstilo,
+          nombrePrenda: prendaData.nombrePrenda,
+          nombreTalla: prendaData.nombreTalla,
+          ...item, // Combina las propiedades originales de `data` (como `fechaPrestamo` y `vestimentaID`).
+        };
+      })
+    );
+  };
+
+  const refreshCarrito = async () => {
+    const data = await listCart(userData.usuario);
+    const detailedInfo = await mapCarritoItems(data);
+    setCarrito(detailedInfo);
+    calculateTotal(detailedInfo);
+  };
+
 
   useEffect(() => {
     const fetchCarrito = async () => {
@@ -41,23 +68,8 @@ export default function CarritoScreen({ navigation }) {
 
         const data = await listCart(usuarioID);
 
-        const detailedInfo = await Promise.all(
-          data.map(async (item) => {
-            const prendaData = await obtenerInformacionPrenda(item.vestimentaID);
-            return {
-              stockTotal: prendaData.stock,
-              imagen1: prendaData.imagen1,
-              precioPorDia: prendaData.precioPorDia,
-              vestimentaEstatus: prendaData.vestimentaEstatus,
-              nombreEstilo: prendaData.nombreEstilo,
-              nombrePrenda: prendaData.nombrePrenda,
-              nombreTalla: prendaData.nombreTalla,
-              ...item, // Combina las propiedades originales de `data` (como `fechaPrestamo` y `vestimentaID`).
-            };
-          })
-        );
+        const detailedInfo = await mapCarritoItems(data);
 
-        console.log('detailedInfo:', detailedInfo); // Verifica el resultado procesado
         setCarrito(detailedInfo);
         calculateTotal(detailedInfo);
       } catch (error) {
@@ -78,82 +90,53 @@ export default function CarritoScreen({ navigation }) {
 
   const handleIncrease = async (item) => {
     try {
-      if (item.stock >= item.stockTotal) {
-        // Si el stock actual ya es igual o mayor que el stockTotal, mostrar un mensaje de error
-        Alert.alert('Límite alcanzado', 'No puedes agregar más de esta prenda.');
+      if((item.stock+1) <= item.stockTotal){
+        const itemCarrito = {
+          usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
+          itemsCarrito: [
+            {
+              vestimentaID: item.vestimentaID,
+              stock: item.stock +1,
+              fechaPrestamo: item.fechaPrestamo,
+            },
+          ],
+        };
+        await agregarAlCarrito(itemCarrito);
+        refreshCarrito();
         return;
       }
-  
-      // Actualizar el stock del ítem
-      const updatedItem = { ...item, stock: item.stock + 1 };
-      await updateCartItem(userData.usuario, updatedItem);
-  
-      // Actualizar el estado del carrito
-      const updatedCarrito = carrito.map((cartItem) =>
-        cartItem.vestimentaID === item.vestimentaID ? updatedItem : cartItem
-      );
-      setCarrito(updatedCarrito);
-  
-      // Recalcular el total
-      calculateTotal(updatedCarrito);
+      Alert.alert('Lo sentimos!!', 'No hay suficientes piezas disponibles');
     } catch (error) {
-      Alert.alert('Error', 'No se pudo aumentar la cantidad.');
+      Alert.alert('Lo sentimos!!', 'Revisa tu conexión a internet');
     }
   };
-  
+
   const handleDecrease = async (item) => {
-    if (item.stock === 1) {
-      // Mostrar confirmación de eliminación
-      Alert.alert(
-        'Eliminar prenda',
-        'La cantidad llegará a 0. ¿Deseas eliminar esta prenda del carrito?',
-        [
+    try {
+      if((item.stock-1) > 0){
+      const itemCarrito = {
+        usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
+        itemsCarrito: [
           {
-            text: 'Cancelar',
-            style: 'cancel',
+            vestimentaID: item.vestimentaID,
+            stock: item.stock -1,
+            fechaPrestamo: item.fechaPrestamo,
           },
-          {
-            text: 'Eliminar',
-            onPress: async () => {
-              try {
-                // Eliminar la prenda
-                await deleteCartItem(userData.usuario, item.vestimentaID); // Asume que tienes una función para eliminar el ítem
-                const updatedCarrito = carrito.filter(
-                  (cartItem) => cartItem.vestimentaID !== item.vestimentaID
-                );
-                setCarrito(updatedCarrito);
-                calculateTotal(updatedCarrito);
-              } catch (error) {
-                Alert.alert('Error', 'No se pudo eliminar la prenda del carrito.');
-              }
-            },
-          },
-        ]
-      );
+        ],
+      };
+      await agregarAlCarrito(itemCarrito);
+      refreshCarrito();
       return;
     }
-  
-    try {
-      // Reducir el stock del ítem
-      const updatedItem = { ...item, stock: item.stock - 1 };
-      await updateCartItem(userData.usuario, updatedItem);
-  
-      // Actualizar el estado del carrito
-      const updatedCarrito = carrito.map((cartItem) =>
-        cartItem.vestimentaID === item.vestimentaID ? updatedItem : cartItem
-      );
-      setCarrito(updatedCarrito);
-  
-      // Recalcular el total
-      calculateTotal(updatedCarrito);
+    Alert.alert('Advertencia', 'La cantidad no pude ser menor a 1 pieza.');
     } catch (error) {
-      Alert.alert('Error', 'No se pudo disminuir la cantidad.');
+      Alert.alert('Lo sentimos!!', 'Revisa tu conexión a internet');
     }
   };
   
 
+
   const handleRemove = async (item) => {
-    console.log('item:', item);
     Alert.alert(
       'Eliminar artículo',
       '¿Estás seguro de que quieres eliminar este artículo del carrito?',
@@ -168,21 +151,20 @@ export default function CarritoScreen({ navigation }) {
           onPress: async () => {
             try {
               const itemCarrito = {
-                usuarioID: item.usuario, // Asegúrate de que `user` contenga el ID del usuario
+                usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
                 itemsCarrito: [
                   {
                     vestimentaID: item.vestimentaID,
-                    stock: cantidad,
-                    fechaPrestamo: new Date().toISOString(),
+                    stock: 0,
+                    fechaPrestamo: item.fechaPrestamo,
                   },
                 ],
               };
-              await removeCartItem(userData.usuario, item.vestimentaID);
-              const updatedCarrito = carrito.filter((cartItem) => cartItem.vestimentaID !== item.vestimentaID);
-              setCarrito(updatedCarrito);
-              calculateTotal(updatedCarrito);
+              await agregarAlCarrito(itemCarrito);
+              refreshCarrito();
             } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar el artículo.');
+              console.log(error);
+              Alert.alert('Lo sentimos!!', 'Revisa tu conexión a internet');
             }
           },
         },
