@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 const VestimentaCard = memo(({ item, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={() => onPress(item.vestimentaID)}>
     {item.imagen1 ? (
-      <Image 
+      <Image
         source={{ uri: item.imagen1 }}
         style={styles.cardImage}
         resizeMode="contain"
@@ -24,6 +24,8 @@ const VestimentaCard = memo(({ item, onPress }) => (
     <View style={styles.cardContent}>
       <Text style={styles.cardTitle}>{item.nombrePrenda}</Text>
       <Text style={styles.cardDetail}>Establecimiento: {item.nombreEstablecimiento}</Text>
+      <Text style={styles.cardDetail}>Categoria: {item.nombreEstilo}</Text>
+      <Text style={styles.cardDetail}>Talla: {item.nombreTalla}</Text>
     </View>
   </TouchableOpacity>
 ));
@@ -32,9 +34,11 @@ export default function VestimentasScreen() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
+  const [filtroModalVisible, setFiltroModalVisible] = useState(false); // Modal de filtro
   const [codigoPostal, setCodigoPostal] = useState('');
   const [vestimentas, setVestimentas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoria, setCategoria] = useState(0);
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -51,23 +55,25 @@ export default function VestimentasScreen() {
     }
   };
 
-  const fetchVestimentas = async () => {
+  const fetchVestimentas = async (selectedCategory = categoria) => {
     try {
       const estado = 'Hidalgo';
       const municipio = 'Tula de Allende';
       const pagina = 0;
-      const response = await obtenerVestimentas(estado, municipio, pagina);
+  
+      console.log('Fetching vestimentas con categoría:', selectedCategory); // Depuración
+      const response = await obtenerVestimentas(estado, municipio, pagina, selectedCategory);
       setVestimentas(response);
       setLoading(false);
     } catch (error) {
-      console.error('Error al obtener las vestimentas', error);
+      console.error('Error al obtener las vestimentas:', error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchVestimentas();
-  }, []);
+  }, [categoria]); // Se ejecutará cuando `categoria` cambie
 
   const closeModal = () => {
     setUbicacionModalVisible(false);
@@ -83,6 +89,29 @@ export default function VestimentasScreen() {
     navigation.navigate('DetallesPrenda', { id });
   };
 
+  const openFilterModal = () => {
+    setFiltroModalVisible(true);
+  };
+
+  const closeFilterModal = () => {
+    setFiltroModalVisible(false);
+  };
+
+  const handleFilterSelect = (filter) => {
+    const categoryMapping = {
+      "Disfraces de Halloween": 6, // Asegúrate de que estos valores sean correctos
+      "Disfraces Temáticos": 7,
+      "Gala": 3,
+    };
+    const selectedCategory = categoryMapping[filter] || 0;
+    setCategoria(selectedCategory); // Actualiza la categoría seleccionada
+    closeFilterModal(); // Cierra el modal
+
+    // Recarga las vestimentas con la nueva categoría
+    setLoading(true); // Muestra el estado de carga mientras se actualizan
+    fetchVestimentas(selectedCategory); // Llama a la función con la nueva categoría
+  };
+
   const renderFixedHeader = () => (
     <View style={styles.fixedHeader}>
       <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
@@ -95,13 +124,30 @@ export default function VestimentasScreen() {
     </View>
   );
 
+  const renderBackAndFilterButtons = () => (
+    <View style={styles.backAndFilterContainer}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="arrow-back" size={28} color="#007AFF" />
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.filterButton} onPress={openFilterModal}>
+        <Ionicons name="filter" size={28} color="#007AFF" />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <SafeAreaView style={styles.safeArea}>
         {menuVisible && <SideMenu closeMenu={toggleMenu} />}
 
+        {/* Encabezado con barra fija */}
         {renderFixedHeader()}
 
+        {/* Botones de Regresar y Filtros */}
+        {renderBackAndFilterButtons()}
+
+        {/* Lista de vestimentas */}
         <FlatList
           data={vestimentas}
           keyExtractor={(item, index) => index.toString()}
@@ -121,6 +167,7 @@ export default function VestimentasScreen() {
           contentContainerStyle={styles.listContentCentered}
         />
 
+        {/* Modal de ubicación */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -139,12 +186,55 @@ export default function VestimentasScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Modal de filtro */}
+        <Modal
+  animationType="slide"
+  transparent={true}
+  visible={filtroModalVisible}
+  onRequestClose={closeFilterModal}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      {/* Cabecera */}
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Selecciona un Filtro</Text>
+        <TouchableOpacity style={styles.modalCloseButton} onPress={closeFilterModal}>
+          <Ionicons name="close" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Opciones de filtros */}
+      <View style={styles.filterOptionsContainer}>
+        {["Disfraces de Halloween", "Disfraces Temáticos", "Gala"].map((filtro, index) => (
+          <Pressable
+            key={index}
+            style={({ pressed }) => [
+              styles.filterOption,
+              pressed && styles.filterOptionPressed, // Retroalimentación visual al presionar
+            ]}
+            onPress={() => handleFilterSelect(filtro)}
+          >
+            <Ionicons
+              name={filtro === "Disfraces de Halloween" ? "skull" : filtro === "Disfraces Temáticos" ? "color-palette" : "diamond"}
+              size={24}
+              color="#007AFF"
+              style={styles.filterIcon}
+            />
+            <Text style={styles.filterOptionText}>{filtro}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  </View>
+</Modal>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
+  // Estilos existentes
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
@@ -159,6 +249,26 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     zIndex: 1,
   },
+  backAndFilterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  filterButton: {
+    padding: 5,
+  },
   listContentCentered: {
     paddingBottom: 20,
     alignItems: 'center',
@@ -172,7 +282,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 20,
     paddingLeft: 15,
     backgroundColor: '#fff',
     marginRight: 15,
@@ -237,58 +347,67 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  modalContainer: {
+
+  // Nuevos estilos para el modal
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Fondo oscuro semitransparente
   },
-  modalView: {
+  modalContent: {
     width: '85%',
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderRadius: 20,
-    padding: 25,
-    alignItems: 'center',
+    padding: 15,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5,
   },
-  modalIcon: {
-    marginBottom: 20,
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   modalTitle: {
-    fontSize: 24,
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 10,
   },
-  modalText: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 5,
-  },
-  modalPostalCode: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 20,
-  },
-  closeButton: {
+  modalCloseButton: {
     backgroundColor: '#007AFF',
+    borderRadius: 20,
+    padding: 5,
+  },
+  filterOptionsContainer: {
+    marginTop: 20,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f2f2',
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 20,
+    marginBottom: 10,
     elevation: 2,
   },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  filterOptionPressed: {
+    backgroundColor: '#d9d9d9', // Color al presionar
+  },
+  filterIcon: {
+    marginRight: 15,
+  },
+  filterOptionText: {
     fontSize: 16,
+    color: '#333',
+    fontWeight: 'bold',
   },
 });
+
