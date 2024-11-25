@@ -1,14 +1,23 @@
 {
   "expo": {
     "name": "RO-RentOutfit",
-    "slug": "RO-RentOutfit",
+    "slug": "ro",
+    "scheme": "myapp",
+    "host": "checkout",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.RORentOutfit"
+      "bundleIdentifier": "com.anonymous.RORentOutfit",
+      "associatedDomains": [
+        "applinks:myapp.com"
+      ]
     },
     "experiments": {
       "newArchEnabled": true
@@ -25,13 +34,36 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "RECEIVE_BOOT_COMPLETED"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "myapp",
+              "host": "checkout-success"
+            },
+            {
+              "scheme": "myapp",
+              "host": "checkout-failure"
+            },
+            {
+              "scheme": "myapp",
+              "host": "checkout-pending"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "extra": {
       "eas": {
-        "projectId": "f95af0e9-804b-4310-a2db-5258ef2bed89"
+        "projectId": "bac00fe9-e5e5-46af-84c9-be02d4bf2a1a"
       }
     },
-    "owner": "alexis919"
+    "owner": "ceron-eng2"
   }
 }

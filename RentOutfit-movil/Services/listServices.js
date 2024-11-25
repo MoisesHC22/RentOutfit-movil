@@ -29,32 +29,48 @@ export const listEstados = async () => {
 
 // Función para obtener municipios
 export const listMunicipios = async (estadoId) => {
-    try {
-      const response = await axios.post(`${API_URL}/Listas/ObtenerMunicipios`, estadoId, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
-      console.error('Error al obtener municipios:', error);
-      throw error;
-    }
-  };
+  try {
+    const response = await axios.post(`${API_URL}/Listas/ObtenerMunicipios`, estadoId, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    Alert.alert('Error de conexión', 'Verifica la conexión a internet.');
+    console.error('Error al obtener municipios:', error);
+    throw error;
+  }
+};
 
-  export const listCart = async (usuarioId) => {
-    try {
-      console.log(usuarioId);
-      const response = await axios.post(`${API_URL}/Cliente/CargarCarrito`, usuarioId, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener cart:', error);
-      throw error;
-    }
-  };
-  
+export const listCart = async (usuarioId) => {
+  try {
+    const response = await axios.post(`${API_URL}/Cliente/CargarCarrito`, usuarioId, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener cart:', error);
+    throw error;
+  }
+};
+
+export const obtenerPreferenceId = async (usuarioId) => {
+  try {
+    console.log('Enviando usuarioId:', usuarioId);
+    // Envía el usuarioId como cuerpo de la solicitud, no como objeto JSON
+    const response = await axios.post(`${API_URL}/Cliente/GenerarTokenMercadoPagoMovil`, usuarioId, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Respuesta del servidor:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener preferencia:', error.response?.data || error.message);
+    throw error;
+  }
+};
+

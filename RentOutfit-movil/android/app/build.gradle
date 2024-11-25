@@ -86,7 +86,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.RORentOutfit'
+    namespace "com.anonymous.RORentOutfit" 
     defaultConfig {
         applicationId 'com.anonymous.RORentOutfit'
         minSdkVersion rootProject.ext.minSdkVersion

@@ -6,6 +6,9 @@ import VestimentasScreen from '../screens/VestimentasScreen';
 import DetallesPrenda from '../screens/DetallesPrenda'; // Importa DetallesPrenda
 import { AuthContext } from '../context/AuthContext';
 import DetallesLocal from '../screens/DetallesLocal';
+import CheckoutSuccessScreen from '../screens/Cart/CheckoutSuccessScreen';
+import CheckoutFailureScreen from '../screens/Cart/CheckoutFailureScreen';
+import CheckoutPendingScreen from '../screens/Cart/CheckoutPendingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +33,11 @@ const MainStack = () => {
 
       {/* Nueva pantalla de detalles del local */}
       <Stack.Screen name="DetallesLocal" component={DetallesLocal} />
+
+      <Stack.Screen name="CheckoutSuccess" component={CheckoutSuccessScreen} />
+      <Stack.Screen name="CheckoutFailure" component={CheckoutFailureScreen} />
+      <Stack.Screen name="CheckoutPending" component={CheckoutPendingScreen} />
+
     </Stack.Navigator>
   );
 };

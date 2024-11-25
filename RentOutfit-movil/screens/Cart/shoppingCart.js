@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { listCart, updateCartItem, removeCartItem } from '../../Services/listServices';
+import { listCart, obtenerPreferenceId } from '../../Services/listServices';
 import { AuthContext } from '../../context/AuthContext';
 import { jwtDecode } from "jwt-decode";
 import { agregarAlCarrito } from '../../Services/AddCartService';
+import * as WebBrowser from 'expo-web-browser';
 import { obtenerInformacionPrenda } from '../../Services/InformacionPrenda';
 import styles from '../../assets/styles/CartStyle';
 
@@ -90,13 +91,13 @@ export default function CarritoScreen({ navigation }) {
 
   const handleIncrease = async (item) => {
     try {
-      if((item.stock+1) <= item.stockTotal){
+      if ((item.stock + 1) <= item.stockTotal) {
         const itemCarrito = {
           usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
           itemsCarrito: [
             {
               vestimentaID: item.vestimentaID,
-              stock: item.stock +1,
+              stock: item.stock + 1,
               fechaPrestamo: item.fechaPrestamo,
             },
           ],
@@ -113,28 +114,26 @@ export default function CarritoScreen({ navigation }) {
 
   const handleDecrease = async (item) => {
     try {
-      if((item.stock-1) > 0){
-      const itemCarrito = {
-        usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
-        itemsCarrito: [
-          {
-            vestimentaID: item.vestimentaID,
-            stock: item.stock -1,
-            fechaPrestamo: item.fechaPrestamo,
-          },
-        ],
-      };
-      await agregarAlCarrito(itemCarrito);
-      refreshCarrito();
-      return;
-    }
-    Alert.alert('Advertencia', 'La cantidad no pude ser menor a 1 pieza.');
+      if ((item.stock - 1) > 0) {
+        const itemCarrito = {
+          usuarioID: userData.usuario, // Asegúrate de que `user` contenga el ID del usuario
+          itemsCarrito: [
+            {
+              vestimentaID: item.vestimentaID,
+              stock: item.stock - 1,
+              fechaPrestamo: item.fechaPrestamo,
+            },
+          ],
+        };
+        await agregarAlCarrito(itemCarrito);
+        refreshCarrito();
+        return;
+      }
+      Alert.alert('Advertencia', 'La cantidad no pude ser menor a 1 pieza.');
     } catch (error) {
       Alert.alert('Lo sentimos!!', 'Revisa tu conexión a internet');
     }
   };
-  
-
 
   const handleRemove = async (item) => {
     Alert.alert(
@@ -221,7 +220,32 @@ export default function CarritoScreen({ navigation }) {
         },
         {
           text: 'Sí',
-          onPress: () => navigation.navigate('Checkout', { carrito, totalAmount }),
+          onPress: async () => {
+            try {
+              const usuarioId = parseInt(userData.usuario, 10);
+          
+              // Obtén el preferenceId desde tu backend
+              const { preferenceId } = await obtenerPreferenceId(usuarioId);
+              console.log('preferenceId:', preferenceId);
+          
+              // Construye la URL para Mercado Pago Checkout
+              const url = `https://www.mercadopago.com.mx/checkout/v1/redirect?preference-id=${preferenceId}&redirect_mode=web`;
+              
+              // Abre el navegador para completar el flujo de pago
+              const result = await WebBrowser.openBrowserAsync(url);
+              console.log('result:', result);
+              if (result.type === 'dismiss') {
+                // Aquí puedes manejar la redirección al home o estado después de cerrar el navegador
+                Alert.alert(
+                  'Estado desconocido',
+                  'Revisa el estado de tu transacción en Mercado Pago.',
+                );
+              }
+            } catch (error) {
+              console.error('Error en el flujo de pago:', error);
+              Alert.alert('Error', 'No se pudo completar el pago.');
+            }
+          },
         },
       ]
     );

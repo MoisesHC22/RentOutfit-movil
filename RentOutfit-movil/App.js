@@ -4,9 +4,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/AuthContext';
 import * as Notifications from 'expo-notifications';
+import * as Linking from 'expo-linking'; // Importa Linking para deep links
 import { navigationRef } from './navigation/RootNavigation';
 import { obtenerUbicacion } from './Services/Location/locateService';
-import { View, Text, ActivityIndicator, Alert, Linking, AppState } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, Linking as NativeLinking, AppState } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -15,10 +16,46 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+ // Configura las rutas de deep linking
+ const linking = {
+  prefixes: ['myapp://'], // Debe coincidir con el esquema en `app.json` y `AndroidManifest.xml`
+  config: {
+    screens: {
+      CheckoutSuccess: 'checkout-success',
+      CheckoutFailure: 'checkout-failure',
+      CheckoutPending: 'checkout-pending',
+      MainStack: 'Home',
+    },
+  },
+};
 
 const App = () => {
   const [locationGranted, setLocationGranted] = useState(null);
   const appState = useRef(AppState.currentState);
+
+ 
+
+  useEffect(() => {
+    const handleDeepLink = (event) => {
+      const url = event.url; // Captura la URL completa
+      console.log('Deep link recibido:', url);
+      const { path, queryParams } = Linking.parse(url);
+    
+      if (path === 'checkout-success') {
+        navigationRef.current?.navigate('CheckoutSuccess', queryParams);
+      } else if (path === 'checkout-failure') {
+        navigationRef.current?.navigate('CheckoutFailure', queryParams);
+      } else if (path === 'checkout-pending') {
+        navigationRef.current?.navigate('CheckoutPending', queryParams);
+      }
+    };
+    
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const handleAppStateChange = async (nextAppState) => {
@@ -37,7 +74,7 @@ const App = () => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
-      subscription.remove(); // Uso del patrón correcto para limpiar el listener
+      subscription.remove();
     };
   }, []);
 
@@ -52,7 +89,7 @@ const App = () => {
           'Permiso de Ubicación Requerido',
           'La aplicación necesita acceso a la ubicación para funcionar. Por favor, otorga permisos de ubicación en Configuración.',
           [
-            { text: 'Abrir Configuración', onPress: () => Linking.openSettings() },
+            { text: 'Abrir Configuración', onPress: () => NativeLinking.openSettings() },
             { text: 'Reintentar', onPress: requestLocation },
           ]
         );
@@ -65,9 +102,9 @@ const App = () => {
         await Notifications.cancelAllScheduledNotificationsAsync();
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: "Revisa los nuevos trajes 🎉",
-            body: "¡Tenemos nuevos trajes que podrían interesarte!",
-            data: { screen: 'VestimentasScreen' }, // Pantalla a la que queremos redirigir
+            title: 'Revisa los nuevos trajes 🎉',
+            body: '¡Tenemos nuevos trajes que podrían interesarte!',
+            data: { screen: 'VestimentasScreen' },
           },
           trigger: { seconds: 180000, repeats: true },
         });
@@ -82,7 +119,7 @@ const App = () => {
       requestPermissions();
     }
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const screen = response.notification.request.content.data.screen;
       if (screen) {
         navigationRef.current?.navigate(screen);
@@ -90,7 +127,7 @@ const App = () => {
     });
 
     return () => {
-      subscription.remove(); // Limpiar el listener de notificaciones
+      subscription.remove();
     };
   }, [locationGranted]);
 
@@ -105,7 +142,7 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <AppNavigator />
       </NavigationContainer>
     </AuthProvider>
