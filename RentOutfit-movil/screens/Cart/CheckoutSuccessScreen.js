@@ -38,11 +38,9 @@ const CheckoutSuccessScreen = ({ route, navigation }) => {
         }, 3000);
       } else {
         console.error('Error en la respuesta del servidor:', response.status);
-        Alert.alert('Error', 'Hubo un problema al registrar el pago.');
       }
     } catch (error) {
-      console.error('Error al registrar el pago:', error);
-      Alert.alert('Error', 'Hubo un problema al registrar el pago.');
+     throw error;
     }
   };
 

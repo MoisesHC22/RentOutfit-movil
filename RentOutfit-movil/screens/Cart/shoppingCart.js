@@ -183,29 +183,29 @@ export default function CarritoScreen({ navigation }) {
         <Text style={styles.itemPrice}>${item.precioPorDia}/día</Text>
         <Text style={styles.itemText}>Talla: {item.nombreTalla}</Text>
         <Text style={styles.itemText}>Estilo: {item.nombreEstilo}</Text>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDecrease(item)}
-          >
-            <Ionicons name="remove-circle-outline" size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <Text style={styles.quantityText}>{item.stock}</Text>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleIncrease(item)}
-          >
-            <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleRemove(item)}
-          >
-            <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-          </TouchableOpacity>
-        </View>
       </View>
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleDecrease(item)}
+        >
+          <Ionicons name="remove-circle-outline" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{item.stock}</Text>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleIncrease(item)}
+        >
+          <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleRemove(item)}
+        >
+          <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 
@@ -223,14 +223,14 @@ export default function CarritoScreen({ navigation }) {
           onPress: async () => {
             try {
               const usuarioId = parseInt(userData.usuario, 10);
-          
+
               // Obtén el preferenceId desde tu backend
               const { preferenceId } = await obtenerPreferenceId(usuarioId);
               console.log('preferenceId cart:', preferenceId);
-          
+
               // Construye la URL para Mercado Pago Checkout
               const url = `https://www.mercadopago.com.mx/checkout/v1/redirect?preference-id=${preferenceId}&redirect_mode=web`;
-              
+
               // Abre el navegador para completar el flujo de pago
               const result = await WebBrowser.openBrowserAsync(url);
               console.log('result:', result);

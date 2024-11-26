@@ -94,8 +94,8 @@ export default function SideMenu({ closeMenu }) {
             }
           }}
         >
-          <Ionicons name="cart" size={24} color="#000000" />
-          <Text style={styles.menuText}>Rentas</Text>
+          <Ionicons name="shirt-outline" size={24} color="#000000" />
+          <Text style={styles.menuText}>Vestimentas Rentadas</Text>
         </TouchableOpacity>
       </View>
 
