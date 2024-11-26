@@ -164,21 +164,30 @@ export default function DetallesPrenda({ route, navigation }) {
         {renderFixedHeader()}
 
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{prenda.nombrePrenda}</Text>
+  {/* Botón "Regresar" */}
+  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+    <Ionicons name="arrow-back" size={32} color="#007AFF" />
+    <Text style={styles.backButtonText}>Regresar</Text>
+  </TouchableOpacity>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageCarousel}>
-            {[prenda.imagen1, prenda.imagen2, prenda.imagen3, prenda.imagen4].map((image, index) => (
-              image ? (
-                <TouchableOpacity key={index} onPress={() => openImage(image)}>
-                  <Image source={{ uri: image }} style={styles.image} />
-                </TouchableOpacity>
-              ) : null
-            ))}
-          </ScrollView>
+  {/* Información de la prenda */}
+  <Text style={styles.title}>{prenda.nombrePrenda}</Text>
 
-          <Text style={styles.price}>${prenda.precioPorDia} <Text style={styles.priceDetails}>IVA incluido</Text></Text>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageCarousel}>
+    {[prenda.imagen1, prenda.imagen2, prenda.imagen3, prenda.imagen4].map((image, index) => (
+      image ? (
+        <TouchableOpacity key={index} onPress={() => openImage(image)}>
+          <Image source={{ uri: image }} style={styles.image} />
+        </TouchableOpacity>
+      ) : null
+    ))}
+  </ScrollView>
 
-          <Text style={styles.description}>{prenda.descripcion}</Text>
+  <Text style={styles.price}>
+    ${prenda.precioPorDia} <Text style={styles.priceDetails}>IVA incluido</Text>
+  </Text>
+
+  <Text style={styles.description}>{prenda.descripcion}</Text>
 
           <View style={styles.detailsContainer}>
             <Text style={styles.detail}>Talla: {prenda.nombreTalla || 'No disponible'}</Text>
@@ -205,24 +214,24 @@ export default function DetallesPrenda({ route, navigation }) {
     </TouchableWithoutFeedback>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
   },
   fixedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     backgroundColor: '#0180CB',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     paddingTop: 40,
-    zIndex: 1,
   },
   menuButton: {
-    marginRight: 15,
+    padding: 5,
   },
   searchBox: {
     flex: 1,
@@ -230,16 +239,15 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderWidth: 1,
     borderRadius: 10,
-    paddingLeft: 15,
+    paddingHorizontal: 15,
     backgroundColor: '#fff',
-    marginRight: 15,
+    marginHorizontal: 10,
   },
   locationButton: {
-    marginLeft: 10,
+    padding: 5,
   },
   container: {
     padding: 20,
-    backgroundColor: '#fff',
     flexGrow: 1,
   },
   loader: {
@@ -247,138 +255,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 15,
     textAlign: 'center',
   },
   imageCarousel: {
     flexDirection: 'row',
     marginBottom: 20,
+    paddingHorizontal: 5,
   },
   image: {
-    width: 200,
-    height: 300,
-    borderRadius: 10,
-    marginRight: 10,
+    width: width * 0.5,
+    height: width * 0.75,
+    borderRadius: 15,
+    marginHorizontal: 10,
+    backgroundColor: '#eaeaea',
   },
   price: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: '#007AFF',
     marginVertical: 10,
     textAlign: 'center',
   },
   priceDetails: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#888',
   },
   description: {
     fontSize: 16,
-    color: '#333',
-    marginVertical: 10,
+    color: '#666',
+    marginVertical: 15,
+    lineHeight: 24,
     textAlign: 'justify',
   },
   detailsContainer: {
-    marginVertical: 20,
-    paddingHorizontal: 5,
+    marginVertical: 15,
+    paddingHorizontal: 10,
   },
   detail: {
-    fontSize: 14,
-    color: '#555',
-    marginVertical: 5,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  buyButton: {
-    backgroundColor: '#004A7F',
-  },
-  buttonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  reviewsSection: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  reviewText: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullImage: {
-    width: '90%',
-    height: '80%',
-    resizeMode: 'contain',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 20,
-  },
-  closeButtonText: {
-    color: '#007AFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  modalView: {
-    width: '85%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalIcon: {
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0180CB',
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 5,
-  },
-  modalPostalCode: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#0180CB',
-    marginBottom: 20,
+    color: '#444',
+    marginBottom: 8,
   },
   counterContainer: {
     flexDirection: 'row',
@@ -391,7 +312,40 @@ const styles = StyleSheet.create({
   },
   counterText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginHorizontal: 20,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginVertical: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+  },
+  backButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });

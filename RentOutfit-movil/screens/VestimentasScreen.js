@@ -39,6 +39,7 @@ export default function VestimentasScreen() {
   const [vestimentas, setVestimentas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoria, setCategoria] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -55,14 +56,14 @@ export default function VestimentasScreen() {
     }
   };
 
-  const fetchVestimentas = async (selectedCategory = categoria) => {
+  const fetchVestimentas = async (selectedCategory = categoria, search = searchQuery) => {
     try {
       const estado = 'Hidalgo';
       const municipio = 'Tula de Allende';
       const pagina = 0;
   
-      console.log('Fetching vestimentas con categoría:', selectedCategory); // Depuración
-      const response = await obtenerVestimentas(estado, municipio, pagina, selectedCategory);
+      console.log('Fetching vestimentas con categoría:', selectedCategory, 'y filtro:', search); // Depuración
+      const response = await obtenerVestimentas(estado, municipio, pagina, selectedCategory, search);
       setVestimentas(response);
       setLoading(false);
     } catch (error) {
@@ -97,6 +98,12 @@ export default function VestimentasScreen() {
     setFiltroModalVisible(false);
   };
 
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+    setLoading(true);
+    fetchVestimentas(categoria, text); // Llama a la función con el término de búsqueda
+  };
+
   const handleFilterSelect = (filter) => {
     const categoryMapping = {
       "Disfraces de Halloween": 6, // Asegúrate de que estos valores sean correctos
@@ -117,7 +124,12 @@ export default function VestimentasScreen() {
       <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
         <Ionicons name="menu" size={32} color="black" />
       </TouchableOpacity>
-      <TextInput style={styles.searchBox} placeholder="Buscar vestimenta" />
+      <TextInput
+        style={styles.searchBox}
+        placeholder="Buscar vestimenta"
+        value={searchQuery}
+        onChangeText={handleSearchChange} // Llama a la función al escribir
+      />
       <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
         <Ionicons name="location" size={32} color="black" />
       </TouchableOpacity>
@@ -189,45 +201,45 @@ export default function VestimentasScreen() {
 
         {/* Modal de filtro */}
         <Modal
-  animationType="slide"
-  transparent={true}
-  visible={filtroModalVisible}
-  onRequestClose={closeFilterModal}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContent}>
-      {/* Cabecera */}
-      <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>Selecciona un Filtro</Text>
-        <TouchableOpacity style={styles.modalCloseButton} onPress={closeFilterModal}>
-          <Ionicons name="close" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
+          animationType="slide"
+          transparent={true}
+          visible={filtroModalVisible}
+          onRequestClose={closeFilterModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              {/* Cabecera */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Selecciona un Filtro</Text>
+                <TouchableOpacity style={styles.modalCloseButton} onPress={closeFilterModal}>
+                  <Ionicons name="close" size={28} color="#fff" />
+                </TouchableOpacity>
+              </View>
 
-      {/* Opciones de filtros */}
-      <View style={styles.filterOptionsContainer}>
-        {["Disfraces de Halloween", "Disfraces Temáticos", "Gala"].map((filtro, index) => (
-          <Pressable
-            key={index}
-            style={({ pressed }) => [
-              styles.filterOption,
-              pressed && styles.filterOptionPressed, // Retroalimentación visual al presionar
-            ]}
-            onPress={() => handleFilterSelect(filtro)}
-          >
-            <Ionicons
-              name={filtro === "Disfraces de Halloween" ? "skull" : filtro === "Disfraces Temáticos" ? "color-palette" : "diamond"}
-              size={24}
-              color="#007AFF"
-              style={styles.filterIcon}
-            />
-            <Text style={styles.filterOptionText}>{filtro}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  </View>
-</Modal>
+              {/* Opciones de filtros */}
+              <View style={styles.filterOptionsContainer}>
+                {["Disfraces de Halloween", "Disfraces Temáticos", "Gala"].map((filtro, index) => (
+                  <Pressable
+                    key={index}
+                    style={({ pressed }) => [
+                      styles.filterOption,
+                      pressed && styles.filterOptionPressed, // Retroalimentación visual al presionar
+                    ]}
+                    onPress={() => handleFilterSelect(filtro)}
+                  >
+                    <Ionicons
+                      name={filtro === "Disfraces de Halloween" ? "skull" : filtro === "Disfraces Temáticos" ? "color-palette" : "diamond"}
+                      size={24}
+                      color="#007AFF"
+                      style={styles.filterIcon}
+                    />
+                    <Text style={styles.filterOptionText}>{filtro}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
