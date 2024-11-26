@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, Alert,StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const CheckoutFailureScreen = ({ route }) => {
   const { preferenceId } = route.params || {};
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (preferenceId) {
@@ -11,58 +14,100 @@ const CheckoutFailureScreen = ({ route }) => {
   }, [preferenceId]);
 
   return (
-    <View>
-      <Text>El pago fue rechazado. Intenta nuevamente.</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Icon name="close-circle-outline" size={80} color="#FF3B30" style={styles.icon} />
+        <Text style={styles.title}>Pago Rechazado</Text>
+        <View style={styles.card}>
+          <Text style={styles.message}>
+            Lo sentimos, el pago no pudo ser procesado. Por favor, intenta nuevamente o elige otro método de pago.
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('ShoppingCart')}
+        >
+          <Text style={styles.primaryButtonText}>Volver al Carrito</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.secondaryButtonText}>Ir al Inicio</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
-
-export default CheckoutFailureScreen;
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+  },
+  icon: {
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF3B30',
+    color: '#333',
     marginBottom: 20,
-},
-message: {
-  fontSize: 16,
-  color: '#333',
-  textAlign: 'center',
-  marginBottom: 30,
-},
-button: {
-  backgroundColor: '#007AFF',
-  padding: 15,
-  borderRadius: 10,
-  alignItems: 'center',
-  marginBottom: 10,
-},
-buttonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: 'bold',
-},
-secondaryButton: {
-  backgroundColor: '#E0E0E0',
-  padding: 15,
-  borderRadius: 10,
-  alignItems: 'center',
-},
-secondaryButtonText: {
-  color: '#333',
-  fontSize: 16,
-  fontWeight: 'bold',
-},
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 30,
+  },
+  message: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginBottom: 15,
+    width: '100%',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    width: '100%',
+  },
+  secondaryButtonText: {
+    color: '#007AFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });
 
+export default CheckoutFailureScreen;
 

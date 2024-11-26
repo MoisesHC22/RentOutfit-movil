@@ -66,11 +66,12 @@ export const obtenerPreferenceId = async (usuarioId) => {
         'Content-Type': 'application/json',
       },
     });
-    console.log('Respuesta del servidor:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error al obtener preferencia:', error.response?.data || error.message);
     throw error;
   }
 };
+
+
 

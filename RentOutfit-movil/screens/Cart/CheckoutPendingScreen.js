@@ -1,75 +1,106 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const CheckoutPendingScreen = () => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pago Pendiente ⏳</Text>
-      <Text style={styles.message}>
-        Tu pago está siendo procesado. Recibirás una notificación cuando se confirme.
-      </Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Home')}
-      >
-        <Text style={styles.buttonText}>Volver al Inicio</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.navigate('ShoppingCart')}
-      >
-        <Text style={styles.secondaryButtonText}>Ver Mi Carrito</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Icon name="clock-outline" size={80} color="#FFC107" style={styles.icon} />
+        <Text style={styles.title}>Pago Pendiente</Text>
+        <View style={styles.card}>
+          <Text style={styles.message}>
+            Tu pago está siendo procesado. Recibirás una notificación cuando se confirme.
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.primaryButtonText}>Volver al Inicio</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('ShoppingCart')}
+        >
+          <Text style={styles.secondaryButtonText}>Ver Mi Carrito</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+  },
+  icon: {
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFC107',
+    color: '#333',
     marginBottom: 20,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 30,
   },
   message: {
     fontSize: 16,
-    color: '#333',
+    color: '#666',
     textAlign: 'center',
-    marginBottom: 30,
+    lineHeight: 24,
   },
-  button: {
+  primaryButton: {
     backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
+    width: '100%',
   },
-  buttonText: {
+  primaryButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#E0E0E0',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    width: '100%',
   },
   secondaryButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#007AFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 
 export default CheckoutPendingScreen;
+

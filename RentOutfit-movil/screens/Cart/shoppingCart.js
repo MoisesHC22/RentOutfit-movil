@@ -226,7 +226,7 @@ export default function CarritoScreen({ navigation }) {
           
               // Obtén el preferenceId desde tu backend
               const { preferenceId } = await obtenerPreferenceId(usuarioId);
-              console.log('preferenceId:', preferenceId);
+              console.log('preferenceId cart:', preferenceId);
           
               // Construye la URL para Mercado Pago Checkout
               const url = `https://www.mercadopago.com.mx/checkout/v1/redirect?preference-id=${preferenceId}&redirect_mode=web`;

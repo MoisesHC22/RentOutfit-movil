@@ -67,7 +67,7 @@ export default function HomeScreen() {
       const pagina = 0;
       const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
 
-      console.log('API Response:', response); // Debug
+      
       setEstablecimientos(response);
       setLoading(false);
     } catch (error) {
