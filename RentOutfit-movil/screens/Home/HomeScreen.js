@@ -7,7 +7,7 @@ import SideMenu from '../../components/Menu';
 import { obtenerUbicacion } from '../../Services/Location/locateService';
 import { obtenerEstablecimientosCercanos } from '../../Services/listEstablecimientos';
 
-const { width } = Dimensions.get('window');
+const { width,height } = Dimensions.get('window');
 
 const EstablecimientoCard = memo(({ item, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={() => onPress(item.establecimientosID)}>
@@ -85,7 +85,7 @@ export default function HomeScreen() {
       const pagina = 0;
       const response = await obtenerEstablecimientosCercanos(estado, municipio, pagina);
 
-      console.log('API Response:', response); // Debug
+      
       setEstablecimientos(response);
       setLoading(false);
     } catch (error) {
@@ -209,6 +209,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
     paddingTop: 40, // Espaciado superior
     zIndex: 1, // Apilamiento superior
+    paddingHorizontal: 15,
+    paddingTop: 40,
+    paddingBottom: 10,
+    backgroundColor: '#0180CB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
   listContentCentered: {
     paddingBottom: 20,
@@ -217,6 +223,17 @@ const styles = StyleSheet.create({
   menuButton: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
+  },
+  searchBox: {
+    flex: 1,
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+
   },
 
   locationButton: {
@@ -225,16 +242,15 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    justifyContent: 'space-around',
+    marginVertical: height * 0.02,// Adjust padding based on screen width
   },
   categoryButton: {
     backgroundColor: '#0180CB',
     padding: 15,
     borderRadius: 50,
-    width: 80,
-    height: 80,
+    width: width * 0.2, // 20% of the screen width
+    height: width * 0.2, // Make it a square
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -249,6 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginTop: 5,
+    textAlign: 'center',
   },
   card: {
     backgroundColor: '#fff',
@@ -256,7 +273,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginBottom: 15,
-    width: width * 0.9,
+    width: '90%', // Use 90% of the screen width
+    alignSelf: 'center', // Center the card horizontally
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -264,8 +282,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardImage: {
-    width: 100,
-    height: 100,
+    width: width * 0.2, // Image takes 20% of screen width
+    height: width * 0.2, // Make it square
     borderRadius: 10,
     marginRight: 10,
   },
@@ -283,8 +301,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   placeholderContainer: {
-    width: 100,
-    height: 100,
+    width: width * 0.2, // Same as cardImage
+    height: width * 0.2, // Same as cardImage
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',

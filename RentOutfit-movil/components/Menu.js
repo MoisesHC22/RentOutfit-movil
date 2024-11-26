@@ -66,6 +66,7 @@ export default function SideMenu({ closeMenu }) {
           <Ionicons name="home" size={24} color="#000000" />
           <Text style={styles.menuText}>Inicio</Text>
         </TouchableOpacity>
+        
 
         <TouchableOpacity
           style={styles.menuItem}
@@ -80,6 +81,21 @@ export default function SideMenu({ closeMenu }) {
         >
           <Ionicons name="cart" size={24} color="#000000" />
           <Text style={styles.menuText}>Carrito</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            closeMenu();
+            if (user) {
+              navigation.navigate('MainStack', { screen: 'RentViewScreen' });
+            } else {
+              navigation.navigate('AuthStack', { screen: 'Login' });
+            }
+          }}
+        >
+          <Ionicons name="shirt-outline" size={24} color="#000000" />
+          <Text style={styles.menuText}>Vestimentas Rentadas</Text>
         </TouchableOpacity>
       </View>
 
