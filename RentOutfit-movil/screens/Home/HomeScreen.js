@@ -1,6 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
-import {SafeAreaView,View,Text,TextInput,TouchableOpacity,StyleSheet,Dimensions,Modal,Pressable,Image,FlatList,TouchableWithoutFeedback,Keyboard,} from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, Modal, Pressable, Image, FlatList, TouchableWithoutFeedback, Keyboard, } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import SideMenu from '../../components/Menu';
 import { obtenerUbicacion } from '../../Services/Location/locateService';
@@ -34,9 +35,12 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [ubicacionModalVisible, setUbicacionModalVisible] = useState(false);
+  const [actualizacionesModalVisible, setActualizacionesModalVisible] = useState(false);  // ya está definido
+  const [actualizacionesMensaje, setActualizacionesMensaje] = useState(''); // Mensaje dinámico
   const [codigoPostal, setCodigoPostal] = useState('');
   const [establecimientos, setEstablecimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalCategory, setModalCategory] = useState('');
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -47,6 +51,20 @@ export default function HomeScreen() {
       setMenuVisible(false);
       Keyboard.dismiss();
     }
+  };
+
+  const handleCategoryPress = (categoria) => {
+    setActualizacionesMensaje(`El apartado "${categoria}" estará disponible en futuras actualizaciones.`);
+    setActualizacionesModalVisible(true);
+  };
+
+  const openFutureFeatureModal = (category) => {
+    setModalCategory(category);
+    setFutureFeatureModal(true);
+  };
+
+  const closeActualizacionesModal = () => {
+    setActualizacionesModalVisible(false);
   };
 
   const handleLocationPress = async () => {
@@ -94,12 +112,10 @@ export default function HomeScreen() {
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <SafeAreaView style={styles.safeArea}>
         {menuVisible && <SideMenu closeMenu={toggleMenu} />}
-
         <View style={styles.fixedHeader}>
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <Ionicons name="menu" size={32} color="black" />
           </TouchableOpacity>
-          <TextInput style={styles.searchBox} placeholder="Buscar establecimientos" />
           <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
             <Ionicons name="location" size={32} color="black" />
           </TouchableOpacity>
@@ -109,14 +125,18 @@ export default function HomeScreen() {
         <View style={styles.categoryContainer}>
           {[
             { name: 'Prendas', icon: 'shirt-outline', screen: 'VestimentasScreen' },
-            { name: 'Calzado', icon: 'footsteps-outline' },
-            { name: 'Hombre', icon: 'man-outline' },
-            { name: 'Mujer', icon: 'woman-outline' },
+            { name: 'Calzado', icon: 'footsteps-outline', modal: true },
+            { name: 'Hombre', icon: 'man-outline', modal: true },
+            { name: 'Mujer', icon: 'woman-outline', modal: true },
           ].map((category, index) => (
             <TouchableOpacity
               key={index}
               style={styles.categoryButton}
-              onPress={() => category.screen && navigation.navigate(category.screen)}
+              onPress={() =>
+                category.modal
+                  ? handleCategoryPress(category.name)
+                  : navigation.navigate(category.screen)
+              }
             >
               <Ionicons name={category.icon} size={32} color="white" />
               <Text style={styles.categoryText}>{category.name}</Text>
@@ -139,28 +159,40 @@ export default function HomeScreen() {
           contentContainerStyle={styles.listContentCentered}
         />
 
+        {/* Modal de futuras actualizaciones */}
         <Modal
           animationType="fade"
           transparent={true}
-          visible={ubicacionModalVisible}
-          onRequestClose={closeModal}
+          visible={actualizacionesModalVisible}
+          onRequestClose={closeActualizacionesModal}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalView}>
-              <Ionicons name="location" size={64} color="#007AFF" style={styles.modalIcon} />
-              <Text style={styles.modalTitle}>¡Ubicación obtenida!</Text>
-              <Text style={styles.modalText}>Tu código postal es:</Text>
-              <Text style={styles.modalPostalCode}>{codigoPostal}</Text>
-              <Pressable style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Cerrar</Text>
-              </Pressable>
+          <TouchableWithoutFeedback onPress={closeActualizacionesModal}>
+            <View style={styles.modalContainer}>
+              <Animatable.View
+                animation="bounceIn"
+                duration={800}
+                style={styles.openFutureFeatureModal}
+              >
+                <Ionicons name="construct-outline" size={64} color="#ff5722" />
+                <Text style={styles.futureFeatureTitle}>Coming Soon</Text>
+                <Text style={styles.futureFeatureText}>
+                  La categoría <Text style={styles.highlight}>{modalCategory}</Text> estará
+                  disponible en futuras actualizaciones. ¡Mantente atento!
+                </Text>
+                <Pressable
+                  style={styles.closeButton}
+                  onPress={closeActualizacionesModal}
+                >
+                  <Text style={styles.closeButtonText}>Cerrar</Text>
+                </Pressable>
+              </Animatable.View>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
-}
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -170,6 +202,13 @@ const styles = StyleSheet.create({
   fixedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', // Elementos a los extremos
+    padding: 15,
+    backgroundColor: '#0180CB', // Fondo azul
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingTop: 40, // Espaciado superior
+    zIndex: 1, // Apilamiento superior
     paddingHorizontal: 15,
     paddingTop: 40,
     paddingBottom: 10,
@@ -182,6 +221,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 15,
   },
   searchBox: {
@@ -192,9 +233,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
     backgroundColor: '#fff',
+
   },
+
   locationButton: {
-    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -321,6 +365,60 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0180CB',
     marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: '#0180CB',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    elevation: 2,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+
+
+  //Modal disponibilidad
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',  // Fondo translúcido
+  },
+  openFutureFeatureModal: {  // Aquí debe coincidir con la propiedad usada en el componente
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  futureFeatureTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ff5722',
+    marginVertical: 10,
+  },
+  futureFeatureText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#555',
+  },
+  highlight: {
+    fontWeight: 'bold',
+    color: '#ff5722',
   },
   closeButton: {
     backgroundColor: '#0180CB',

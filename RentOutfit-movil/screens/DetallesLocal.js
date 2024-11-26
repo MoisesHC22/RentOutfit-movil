@@ -95,7 +95,13 @@ export default function DetallesLocal({ route, navigation }) {
         {renderFixedHeader()}
 
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{local.nombreEstablecimiento}</Text>
+          {/* Encabezado con botón de regresar y título */}
+          <View style={styles.headerContainer}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.title}>{local.nombreEstablecimiento}</Text>
+          </View>
 
           {/* Imagen del establecimiento */}
           {local.linkImagenEstablecimiento && (
@@ -173,6 +179,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     flexGrow: 1,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: 15,
+  },
+  backButton: {
+    marginRight: 10,
+    padding: 5,
+  },
   loader: {
     flex: 1,
     justifyContent: 'center',
@@ -184,10 +200,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
     color: '#333',
   },
   image: {
@@ -262,8 +276,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   closeButtonText: {
-    color: '#333',
     fontSize: 18,
-    fontWeight: 'bold',
+    color: '#333',
   },
 });
